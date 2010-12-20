@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="ISO-8859-2"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="http://lddocalhost/idp/shibboleth">
+
+    <IDPSSODescriptor protocolSupportEnumeration="urn:mace:shibboleth:1.0 urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+
+        <Extensions>
+            <shibmd:Scope xmlns:shibmd="urn:mace:shibboleth:metadata:1.0" regexp="false">ujep.cz</shibmd:Scope>
+        </Extensions>
+
+        <KeyDescriptor>
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>
+MIIE6zCCA9OgAwIBAgIEQrOHrDANBgkqhkiG9w0BAQUFADBDMRIwEAYKCZImiZPy
+LGQBGRYCY3oxGTAXBgoJkiaJk/IsZAEZFgljZXNuZXQtY2ExEjAQBgNVBAMTCUNF
+U05FVCBDQTAeFw0xMDAyMDUwNjA5MjJaFw0xMTAzMDUwNjM5MjJaMGsxEjAQBgoJ
+kiaJk/IsZAEZFgJjejEZMBcGCgmSJomT8ixkARkWCWNlc25ldC1jYTEkMCIGA1UE
+ChMbVW5pdmVyc2l0eSBvZiBKLiBFLiBQdXJreW5lMRQwEgYDVQQDEwtpZHAudWpl
+cC5jejCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMDXBB0IPCgSo2Jw
+Fwo96bXHg5dB0ebhdbk5VeNIpGuitrdyb7+Y6sQL2jn5rLUuy0koyFtKnsi5CCIv
+3PoaJ0cUDGVx90m4yYK8E1rOHG4qc1SOWl5X0IHM5CwAGPXzWzBL0xQgq8qQs1nd
+IdYg8iMmC5bNwaV2XFtp03feERQmh2H/wAZJupWhPWrb1QzNDE1ndoZIbUlkn6MK
+yjlPZmXz9HapN5p6wypWL8M/0ILx5TC5KqDgTPbj3hlkxX4VpxoHCLI1qQyIJ6FM
+psiJF7XbKfuHTccwfLG4lEzVcf8V1hz5DeXyzr5syq+Lzf91XSRL/v3jQQ4AUmGI
+GSvDh2sCAwEAAaOCAb0wggG5MA4GA1UdDwEB/wQEAwIFoDAZBgNVHSAEEjAQMA4G
+DCsGAQQBvnkBAgICADA9BgNVHREENjA0gRVwYXZlbC5wb2xhY2VrQHVqZXAuY3qC
+C2lkcC51amVwLmN6gg5zaGliYWwudWplcC5jejCCAQsGA1UdHwSCAQIwgf8wWqBY
+oFakVDBSMRIwEAYKCZImiZPyLGQBGRYCY3oxGTAXBgoJkiaJk/IsZAEZFgljZXNu
+ZXQtY2ExEjAQBgNVBAMTCUNFU05FVCBDQTENMAsGA1UEAxMEQ1JMNTCBoKCBnaCB
+moZCaHR0cDovL3d3dy5jZXNuZXQuY3ovcGtpL2NybC9jbj1DRVNORVQlMjBDQSxk
+Yz1jZXNuZXQtY2EsZGM9Y3ouY3JshlRsZGFwOi8vbGRhcC5jZXNuZXQtY2EuY3ov
+Y249Q0VTTkVUJTIwQ0EsZGM9Y2VzbmV0LWNhLGRjPWN6P2NlcnRpZmljYXRlUmV2
+b2NhdGlvbkxpc3QwHwYDVR0jBBgwFoAUL2wFw1EmrK85nD44Nd1SKSeAxfUwHQYD
+VR0OBBYEFEvU9hiShsbDbtbv8Bg8RyDqOCyCMA0GCSqGSIb3DQEBBQUAA4IBAQDI
+oR3OpYnhdXm4Ay0pZAemLcMySvsKwgTrw/F0pT7Sn2MPUcc+LwkCwiXAecyPaLEl
+bivcNmN7cZF7R2ef/BMeDNhWEZLYnYHE/xRmu0b6Mx/vhKxqZRh5s82EePASB5Xf
+MPOU2JcpDXIEJKQjIyVPQPs6Y3fVL8nJX7aLlkLZ+UVlTnbpdLv09RNjtRgVxh1/
+2dor6/RyEsQP1/Ekz482iFqL+61pjXzrQssdTFKlTMxRKM2h5i2B0MmPrne1zGSh
++q3x181uOgv1cCJATcU9PZiAd/Eua7SUs0ItvX1y5HUPKKknExJ+9cxssQxBU7SH
+idTONNLnAFV37h16DlOV
+                    </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+
+        </KeyDescriptor>
+
+         <KeyDescriptor>
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>
+MIIEZzCCA0+gAwIBAgIEQrNQNzANBgkqhkiG9w0BAQUFADBDMRIwEAYKCZImiZPy
+LGQBGRYCY3oxGTAXBgoJkiaJk/IsZAEZFgljZXNuZXQtY2ExEjAQBgNVBAMTCUNF
+U05FVCBDQTAeFw0wODA3MDkwNjA4MzZaFw0wOTA4MDkwNjM4MzZaMGsxEjAQBgoJ
+kiaJk/IsZAEZFgJjejEZMBcGCgmSJomT8ixkARkWCWNlc25ldC1jYTEkMCIGA1UE
+ChMbVW5pdmVyc2l0eSBvZiBKLiBFLiBQdXJreW5lMRQwEgYDVQQDEwtpZHAudWpl
+cC5jejCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEArL+xEYf+oOj1CuviHFnQ
+aYC0t2/8I9jCVjsC1d7+1XYnbGPlFSVSg+hHiwF4UJPZBxHEXzYE5NyXWPPyP5/E
+YLHr1Ze+GF9Cl9Y7sv0p9g2KIge6XVDO0NlSalm27FmOrWq/xsROIqodnwIF7jmT
++ltOTOTfpQv26/YzrAeMDBECAwEAAaOCAb0wggG5MA4GA1UdDwEB/wQEAwIFoDAZ
+BgNVHSAEEjAQMA4GDCsGAQQBvnkBAgICADA9BgNVHREENjA0gRVwYXZlbC5wb2xh
+Y2VrQHVqZXAuY3qCC2lkcC51amVwLmN6gg5zaGliYWwudWplcC5jejCCAQsGA1Ud
+HwSCAQIwgf8wWqBYoFakVDBSMRIwEAYKCZImiZPyLGQBGRYCY3oxGTAXBgoJkiaJ
+k/IsZAEZFgljZXNuZXQtY2ExEjAQBgNVBAMTCUNFU05FVCBDQTENMAsGA1UEAxME
+Q1JMMzCBoKCBnaCBmoZCaHR0cDovL3d3dy5jZXNuZXQuY3ovcGtpL2NybC9jbj1D
+RVNORVQlMjBDQSxkYz1jZXNuZXQtY2EsZGM9Y3ouY3JshlRsZGFwOi8vbGRhcC5j
+ZXNuZXQtY2EuY3ovY249Q0VTTkVUJTIwQ0EsZGM9Y2VzbmV0LWNhLGRjPWN6P2Nl
+cnRpZmljYXRlUmV2b2NhdGlvbkxpc3QwHwYDVR0jBBgwFoAUL2wFw1EmrK85nD44
+Nd1SKSeAxfUwHQYDVR0OBBYEFGCTxt3OgCa9flhNSH/icMsTpfckMA0GCSqGSIb3
+DQEBBQUAA4IBAQB/bgCje+ubbAmh6aRm1TbSZeHtIx3ZNaNntIstDvxhzD1S/NVO
+jWK2yVB6zP0bcMf3E4doZOwYrCS7Jive/c9VFv9iex0mOKua+rjfn4jnynNcRC72
+1+z0IDVncQfRGgUW20NlH53Hn2FiZKdAoVk68rFdMyvf94ZWQxYhnal7HyCjlSwt
+1PuScg7ebB6lYSSVs9IIQho2VTsAKYDA/+NUeEahQ5ChpaYfgVCycx9pUSsvpVG6
+sbvo2+b1Wfl1FXDFwJ7ErEQS+vOZpUuG5M+TtLrpiGCEKoBLP7qRCvuGqPdQiWEE
+17tZRjbBuaYK4Eta3bFmZ3lLPUWhZzfOGhaV
+                    </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+
+        </KeyDescriptor>
+
+        
+        <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://idp.ujep.cz:8443/idp/profile/SAML1/SOAP/ArtifactResolution" index="1"></ArtifactResolutionService>
+
+        <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://idp.ujep.cz:8443/idp/profile/SAML2/SOAP/ArtifactResolution" index="2"></ArtifactResolutionService>
+                                   
+        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</NameIDFormat>
+
+        <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" Location="https://idp.ujep.cz/idp/profile/Shibboleth/SSO"></SingleSignOnService>
+
+        
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://idp.ujep.cz/idp/profile/SAML2/POST/SSO"></SingleSignOnService>
+
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign" Location="https://idp.ujep.cz/idp/profile/SAML2/POST-SimpleSign/SSO"></SingleSignOnService>
+        
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://idp.ujep.cz/idp/profile/SAML2/Redirect/SSO"></SingleSignOnService>
+    </IDPSSODescriptor>
+
+    <AttributeAuthorityDescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+
+        <Extensions>
+            <shibmd:Scope xmlns:shibmd="urn:mace:shibboleth:metadata:1.0" regexp="false">ujep.cz</shibmd:Scope>
+
+        </Extensions>
+
+        <KeyDescriptor>
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+
+                    <ds:X509Certificate>
+MIIE6zCCA9OgAwIBAgIEQrOHrDANBgkqhkiG9w0BAQUFADBDMRIwEAYKCZImiZPy
+LGQBGRYCY3oxGTAXBgoJkiaJk/IsZAEZFgljZXNuZXQtY2ExEjAQBgNVBAMTCUNF
+U05FVCBDQTAeFw0xMDAyMDUwNjA5MjJaFw0xMTAzMDUwNjM5MjJaMGsxEjAQBgoJ
+kiaJk/IsZAEZFgJjejEZMBcGCgmSJomT8ixkARkWCWNlc25ldC1jYTEkMCIGA1UE
+ChMbVW5pdmVyc2l0eSBvZiBKLiBFLiBQdXJreW5lMRQwEgYDVQQDEwtpZHAudWpl
+cC5jejCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMDXBB0IPCgSo2Jw
+Fwo96bXHg5dB0ebhdbk5VeNIpGuitrdyb7+Y6sQL2jn5rLUuy0koyFtKnsi5CCIv
+3PoaJ0cUDGVx90m4yYK8E1rOHG4qc1SOWl5X0IHM5CwAGPXzWzBL0xQgq8qQs1nd
+IdYg8iMmC5bNwaV2XFtp03feERQmh2H/wAZJupWhPWrb1QzNDE1ndoZIbUlkn6MK
+yjlPZmXz9HapN5p6wypWL8M/0ILx5TC5KqDgTPbj3hlkxX4VpxoHCLI1qQyIJ6FM
+psiJF7XbKfuHTccwfLG4lEzVcf8V1hz5DeXyzr5syq+Lzf91XSRL/v3jQQ4AUmGI
+GSvDh2sCAwEAAaOCAb0wggG5MA4GA1UdDwEB/wQEAwIFoDAZBgNVHSAEEjAQMA4G
+DCsGAQQBvnkBAgICADA9BgNVHREENjA0gRVwYXZlbC5wb2xhY2VrQHVqZXAuY3qC
+C2lkcC51amVwLmN6gg5zaGliYWwudWplcC5jejCCAQsGA1UdHwSCAQIwgf8wWqBY
+oFakVDBSMRIwEAYKCZImiZPyLGQBGRYCY3oxGTAXBgoJkiaJk/IsZAEZFgljZXNu
+ZXQtY2ExEjAQBgNVBAMTCUNFU05FVCBDQTENMAsGA1UEAxMEQ1JMNTCBoKCBnaCB
+moZCaHR0cDovL3d3dy5jZXNuZXQuY3ovcGtpL2NybC9jbj1DRVNORVQlMjBDQSxk
+Yz1jZXNuZXQtY2EsZGM9Y3ouY3JshlRsZGFwOi8vbGRhcC5jZXNuZXQtY2EuY3ov
+Y249Q0VTTkVUJTIwQ0EsZGM9Y2VzbmV0LWNhLGRjPWN6P2NlcnRpZmljYXRlUmV2
+b2NhdGlvbkxpc3QwHwYDVR0jBBgwFoAUL2wFw1EmrK85nD44Nd1SKSeAxfUwHQYD
+VR0OBBYEFEvU9hiShsbDbtbv8Bg8RyDqOCyCMA0GCSqGSIb3DQEBBQUAA4IBAQDI
+oR3OpYnhdXm4Ay0pZAemLcMySvsKwgTrw/F0pT7Sn2MPUcc+LwkCwiXAecyPaLEl
+bivcNmN7cZF7R2ef/BMeDNhWEZLYnYHE/xRmu0b6Mx/vhKxqZRh5s82EePASB5Xf
+MPOU2JcpDXIEJKQjIyVPQPs6Y3fVL8nJX7aLlkLZ+UVlTnbpdLv09RNjtRgVxh1/
+2dor6/RyEsQP1/Ekz482iFqL+61pjXzrQssdTFKlTMxRKM2h5i2B0MmPrne1zGSh
++q3x181uOgv1cCJATcU9PZiAd/Eua7SUs0ItvX1y5HUPKKknExJ+9cxssQxBU7SH
+idTONNLnAFV37h16DlOV
+                     </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+
+        </KeyDescriptor>
+
+        <KeyDescriptor>
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+
+                    <ds:X509Certificate>
+MIIEZzCCA0+gAwIBAgIEQrNQNzANBgkqhkiG9w0BAQUFADBDMRIwEAYKCZImiZPy
+LGQBGRYCY3oxGTAXBgoJkiaJk/IsZAEZFgljZXNuZXQtY2ExEjAQBgNVBAMTCUNF
+U05FVCBDQTAeFw0wODA3MDkwNjA4MzZaFw0wOTA4MDkwNjM4MzZaMGsxEjAQBgoJ
+kiaJk/IsZAEZFgJjejEZMBcGCgmSJomT8ixkARkWCWNlc25ldC1jYTEkMCIGA1UE
+ChMbVW5pdmVyc2l0eSBvZiBKLiBFLiBQdXJreW5lMRQwEgYDVQQDEwtpZHAudWpl
+cC5jejCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEArL+xEYf+oOj1CuviHFnQ
+aYC0t2/8I9jCVjsC1d7+1XYnbGPlFSVSg+hHiwF4UJPZBxHEXzYE5NyXWPPyP5/E
+YLHr1Ze+GF9Cl9Y7sv0p9g2KIge6XVDO0NlSalm27FmOrWq/xsROIqodnwIF7jmT
++ltOTOTfpQv26/YzrAeMDBECAwEAAaOCAb0wggG5MA4GA1UdDwEB/wQEAwIFoDAZ
+BgNVHSAEEjAQMA4GDCsGAQQBvnkBAgICADA9BgNVHREENjA0gRVwYXZlbC5wb2xh
+Y2VrQHVqZXAuY3qCC2lkcC51amVwLmN6gg5zaGliYWwudWplcC5jejCCAQsGA1Ud
+HwSCAQIwgf8wWqBYoFakVDBSMRIwEAYKCZImiZPyLGQBGRYCY3oxGTAXBgoJkiaJ
+k/IsZAEZFgljZXNuZXQtY2ExEjAQBgNVBAMTCUNFU05FVCBDQTENMAsGA1UEAxME
+Q1JMMzCBoKCBnaCBmoZCaHR0cDovL3d3dy5jZXNuZXQuY3ovcGtpL2NybC9jbj1D
+RVNORVQlMjBDQSxkYz1jZXNuZXQtY2EsZGM9Y3ouY3JshlRsZGFwOi8vbGRhcC5j
+ZXNuZXQtY2EuY3ovY249Q0VTTkVUJTIwQ0EsZGM9Y2VzbmV0LWNhLGRjPWN6P2Nl
+cnRpZmljYXRlUmV2b2NhdGlvbkxpc3QwHwYDVR0jBBgwFoAUL2wFw1EmrK85nD44
+Nd1SKSeAxfUwHQYDVR0OBBYEFGCTxt3OgCa9flhNSH/icMsTpfckMA0GCSqGSIb3
+DQEBBQUAA4IBAQB/bgCje+ubbAmh6aRm1TbSZeHtIx3ZNaNntIstDvxhzD1S/NVO
+jWK2yVB6zP0bcMf3E4doZOwYrCS7Jive/c9VFv9iex0mOKua+rjfn4jnynNcRC72
+1+z0IDVncQfRGgUW20NlH53Hn2FiZKdAoVk68rFdMyvf94ZWQxYhnal7HyCjlSwt
+1PuScg7ebB6lYSSVs9IIQho2VTsAKYDA/+NUeEahQ5ChpaYfgVCycx9pUSsvpVG6
+sbvo2+b1Wfl1FXDFwJ7ErEQS+vOZpUuG5M+TtLrpiGCEKoBLP7qRCvuGqPdQiWEE
+17tZRjbBuaYK4Eta3bFmZ3lLPUWhZzfOGhaV
+                    </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+
+        </KeyDescriptor>
+
+        <AttributeService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://idp.ujep.cz:8443/idp/profile/SAML1/SOAP/AttributeQuery"></AttributeService>
+        
+        <AttributeService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://idp.ujep.cz:8443/idp/profile/SAML2/SOAP/AttributeQuery"></AttributeService>
+        
+        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>    
+    </AttributeAuthorityDescriptor>
+
+    <Organization>
+      <OrganizationName xml:lang="cs">Univerzita Jana Evangelisty Purkyně v Ústí nad Labem</OrganizationName>
+      <OrganizationName xml:lang="en">Jan Evangelista Purkyne University in Usti nad Labem</OrganizationName>
+      <OrganizationDisplayName xml:lang="cs">Univerzita Jana Evangelisty Purkyně v Ústí nad Labem</OrganizationDisplayName>
+      <OrganizationDisplayName xml:lang="en">Jan Evangelista Purkyne University in Usti nad Labem</OrganizationDisplayName>
+      <OrganizationURL xml:lang="cs">http://www.ujep.cz/</OrganizationURL>
+
+      <OrganizationURL xml:lang="en">http://www.ujep.cz/en/welcome.html</OrganizationURL>
+    </Organization>
+    <Organization>
+      <OrganizationName xml:lang="cs">Univerzita Jana Evangelisty Purkyně v Ústí nad Labem</OrganizationName>
+      <OrganizationName xml:lang="en">Jan Evangelista Purkyne University in Usti nad Labem</OrganizationName>
+      <OrganizationDisplayName xml:lang="cs">Univerzita Jana Evangelisty Purkyně v Ústí nad Labem</OrganizationDisplayName>
+      <OrganizationDisplayName xml:lang="en">Jan Evangelista Purkyne University in Usti nad Labem</OrganizationDisplayName>
+      <OrganizationURL xml:lang="cs">http://www.ujep.cz/</OrganizationURL>
+
+      <OrganizationURL xml:lang="en">http://www.ujep.cz/en/welcome.html</OrganizationURL>
+    </Organization>
+
+    <ContactPerson contactType="technical">
+      <GivenName>Pavel</GivenName>
+      <SurName>Polacek</SurName>
+      <EmailAddress>pavel.polacek@ujep.cz</EmailAddress>
+
+    </ContactPerson>
+    
+</EntityDescriptor>    

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="ISO-8859-2"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="http://lddocalhost/idp/shibboleth">
+
+    <IDPSSODescriptor protocolSupportEnumeration="urn:mace:shibboleth:1.0 urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+
+        <Extensions>
+            <shibmd:Scope xmlns:shibmd="urn:mace:shibboleth:metadata:1.0" regexp="false">ujep.cz</shibmd:Scope>
+        </Extensions>
+
+        <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://idp.ujep.cz:8443/idp/profile/SAML1/SOAP/ArtifactResolution" index="1"></ArtifactResolutionService>
+
+        <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://idp.ujep.cz:8443/idp/profile/SAML2/SOAP/ArtifactResolution" index="2"></ArtifactResolutionService>
+                                   
+        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
+
+        <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" Location="https://idp.ujep.cz/idp/profile/Shibboleth/SSO"></SingleSignOnService>
+
+        
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://idp.ujep.cz/idp/profile/SAML2/POST/SSO"></SingleSignOnService>
+
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign" Location="https://idp.ujep.cz/idp/profile/SAML2/POST-SimpleSign/SSO"></SingleSignOnService>
+        
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://idp.ujep.cz/idp/profile/SAML2/Redirect/SSO"></SingleSignOnService>
+    </IDPSSODescriptor>
+
+    <AttributeAuthorityDescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+
+        <Extensions>
+            <shibmd:Scope xmlns:shibmd="urn:mace:shibboleth:metadata:1.0" regexp="false">ujep.cz</shibmd:Scope>
+
+        </Extensions>
+
+        <AttributeService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://idp.ujep.cz:8443/idp/profile/SAML1/SOAP/AttributeQuery"></AttributeService>
+        
+        <AttributeService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://idp.ujep.cz:8443/idp/profile/SAML2/SOAP/AttributeQuery"></AttributeService>
+        
+        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>    
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</NameIDFormat>    
+    </AttributeAuthorityDescriptor>
+
+    <Organization>
+      <OrganizationName xml:lang="cs">Univerzita Jana Evangelisty Purkyně v Ústí nad Labem</OrganizationName>
+      <OrganizationName xml:lang="en">Jan Evangelista Purkyne University in Usti nad Labem</OrganizationName>
+      <OrganizationDisplayName xml:lang="cs">Univerzita Jana Evangelisty Purkyně v Ústí nad Labem</OrganizationDisplayName>
+      <OrganizationDisplayName xml:lang="en">Jan Evangelista Purkyne University in Usti nad Labem</OrganizationDisplayName>
+      <OrganizationURL xml:lang="cs">http://www.ujep.cz/</OrganizationURL>
+
+      <OrganizationURL xml:lang="en">http://www.ujep.cz/en/welcome.html</OrganizationURL>
+    </Organization>
+
+    <ContactPerson contactType="technical">
+      <GivenName>Pavel</GivenName>
+      <SurName>Polacek</SurName>
+      <EmailAddress>pavel.polacek@ujep.cz</EmailAddress>
+
+    </ContactPerson>
+    
+</EntityDescriptor>    

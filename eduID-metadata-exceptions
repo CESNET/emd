@@ -1,0 +1,354 @@
+https://whoami.cesnet.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+# Vyjimka do konce doby platnosti certifikatu. Semik 14.9.2010
+11W: Certificate subject="DC=cz, DC=cesnet-ca, O=CESNET, CN=whoami.cesnet.cz", serial=42B38D64, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" has key of length 1024 required is 2048.
+
+https://au.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Vyjimka do konce platnosti certifikatu. Semik 14.9.2010
+11W: Certificate subject="DC=cz, DC=cesnet-ca, O=CESNET, CN=au.cesnet.cz", serial=42B38CD4, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" has key of length 1024 required is 2048.
+
+https://enumon.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Vyjimka do konce platnosti certifikatu. Semik 14.9.2010
+11W: Certificate subject="C=CZ, O=CESNET, CN=enumon.cesnet.cz", serial=FAD928E1B3AD4E69DECF126015262FA7, issued="C=NL, O=TERENA, CN=TERENA SSL CA" has key of length 1024 required is 2048.
+
+https://homeproj.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://meta.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Vyjimka do konce platnosti certifikatu. Semik 14.9.2010
+11W: Certificate subject="C=CZ, O=CESNET, CN=meta.cesnet.cz", serial=3DB2B594965C026976A3AB14350AB0A0, issued="C=NL, O=TERENA, CN=TERENA SSL CA" has key of length 1024 required is 2048.
+
+https://random.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://sip.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+11W: Certificate subject="DC=cz, DC=cesnet-ca, O=CESNET, CN=sip.cesnet.cz", serial=42B35C43, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" is expired.
+
+https://sp2.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Vyjimka do konce platnosti certifikatu. Semik 14.9.2010
+11W: Certificate subject="DC=cz, DC=cesnet-ca, O=CESNET, CN=sp2.cesnet.cz", serial=42B38958, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" has key of length 1024 required is 2048.
+
+https://vidcon.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://webmin.cesnet.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://tcs-p.cesnet.cz/simplesaml/
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://tcs.cesnet.cz/simplesaml/
+# Vyjimka do konce platnosti certifikatu. Semik 14.9.2010
+11W: Certificate subject="C=CZ, O=CESNET, CN=tcs.cesnet.cz", serial=CD178562DC573A9BB702075863BCE4F7, issued="C=NL, O=TERENA, CN=TERENA SSL CA" has key of length 1024 required is 2048.
+
+https://www.metacentrum.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://login.feld.cvut.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+
+https://helium.jcu.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+https://idp.lib.cas.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+https://idp2.ics.muni.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+
+https://atlases.muni.cz/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+11W: Certificate subject="DC=cz, DC=cesnet-ca, O=Masaryk University, CN=atlases.muni.cz", serial=42B37156, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" is expired.
+
+https://blk.ics.muni.cz/shibboleth/cztestfed/sp
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://nfsmon.ics.muni.cz/
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://moodlinka.ped.muni.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://portal.med.muni.cz/shibboleth/sp
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://telemedicina.med.muni.cz/shibboleth/sp
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://www.zubnilekarstvi.cz/shibboleth/sp
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://www.sitola.cz/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://docs.cerit-sc.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://idp.mendelu.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+https://shibboleth.nkp.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+https://certik.osu.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+
+https://idp.slu.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+https://shibbo.tul.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+https://idp.ujep.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+
+https://login.ezproxy.is.cuni.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://portal.lf1.cuni.cz/shibboleth/
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://shibboleth.lf1.cuni.cz/shibboleth/
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://ufal-point.mff.cuni.cz/shibboleth/eduid/sp
+# Docasna vyjimka do 11/2010. Semik 21.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://mefanet-motol.cuni.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Vyjimka do konce doby platnosti certifikatu. Semik 14.9.2010
+11W: Certificate subject="DC=cz, DC=cesnet-ca, O=Charles University in Prague, CN=mefanet-motol.cuni.cz", serial=42B39022, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" has key of length 1024 required is 2048.
+
+https://cas.cuni.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+
+https://idp.upol.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+
+https://mefanet.upol.cz/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://idp.upce.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+
+https://idp.vsb.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+https://www.vutbr.cz/SSO/saml2/idp
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+11W: Certificate subject="C=CZ, O=Brno University of Technology, CN=vutbr.cz", serial=01000000000122074DFE55, issued="C=BE, O=Cybertrust, OU=Educational CA, CN=Cybertrust Educational CA" has key of length 1024 required is 2048.
+
+https://www.vutbr.cz/SSO/saml2/sp
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+11W: Certificate subject="C=CZ, O=Brno University of Technology, CN=vutbr.cz", serial=01000000000122074DFE55, issued="C=BE, O=Cybertrust, OU=Educational CA, CN=Cybertrust Educational CA" has key of length 1024 required is 2048.
+
+https://shib-sp.zcu.cz/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://shib.zcu.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+11W: Certificate subject="C=CZ, O=University of West Bohemia, CN=shib.zcu.cz", serial=01000000000120A533EA4D, issued="C=BE, O=Cybertrust, OU=Educational CA, CN=Cybertrust Educational CA" has key of length 1024 required is 2048.
+
+https://foodle.eduid.cz/sp
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+11W: Certificate subject="C=CZ, ST=Some-State, O=eduID.cz, CN=foodle.eduid.cz", serial=BC3FEEDB42DA9E81, issued="C=CZ, ST=Some-State, O=eduID.cz, CN=foodle.eduid.cz" has key of length 1024 required is 2048.
+
+https://www.eduid.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://idp2.civ.cvut.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 15.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+# U zahranicnich SP nema ceska verze nazvu smysl a certifikat jim akceptujem do konce jeho platnosti.
+https://auth.services.bmj.com/auth
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+11W: Certificate subject="C=GB, ST=London, L=London, O=BMJ Publishing Group LTD, OU=BMJ, CN=auth.services.bmj.com", serial=167CDFF979D650FF3310F6E11CE6F45C, issued="C=ZA, ST=Western Cape, L=Cape Town, O=Thawte Consulting cc, OU=Certification Services Division, CN=Thawte Premium Server CA, emailAddress=premium-server@thawte.com" has key of length 1024 required is 2048.
+
+https://rxauth.reaxys.com/
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+8W: IDPSO|SPSSODescriptor must define urn:oasis:names:tc:SAML:2.0:protocol support.
+11W: Certificate subject="C=US, ST=Ohio, L=Miamisburg, O=LEXIS-NEXIS, CN=sdauth.sciencedirect.com", serial=72750EE38DC2F0A34A1F244B52BD97A3, issued="C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=Terms of use at https://www.verisign.com/rpa \(c\)09, CN=VeriSign Class 3 Secure Server CA - G2" has key of length 1024 required is 2048.
+
+https://scauth.scopus.com/
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+8W: IDPSO|SPSSODescriptor must define urn:oasis:names:tc:SAML:2.0:protocol support.
+11W: Certificate subject="C=US, ST=Ohio, L=Miamisburg, O=LEXIS-NEXIS, CN=sdauth.sciencedirect.com", serial=72750EE38DC2F0A34A1F244B52BD97A3, issued="C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=Terms of use at https://www.verisign.com/rpa \(c\)09, CN=VeriSign Class 3 Secure Server CA - G2" has key of length 1024 required is 2048.
+
+https://sdauth.sciencedirect.com/
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+8W: IDPSO|SPSSODescriptor must define urn:oasis:names:tc:SAML:2.0:protocol support.
+11W: Certificate subject="C=US, ST=Ohio, L=Miamisburg, O=LEXIS-NEXIS, CN=sdauth.sciencedirect.com", serial=72750EE38DC2F0A34A1F244B52BD97A3, issued="C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=Terms of use at https://www.verisign.com/rpa \(c\)09, CN=VeriSign Class 3 Secure Server CA - G2" has key of length 1024 required is 2048.
+
+https://shibboleth.cambridge.org/shibboleth-sp
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+11W: Certificate subject="C=GB, ST=Cambridgeshire, L=Cambridge, O=Cambridge University Press, OU=Terms of use at www.verisign.co.uk/rpa \(c\)05, OU=Authenticated by VeriSign, OU=Member, VeriSign Trust Network, CN=shibboleth.cambridge.org", serial=71466DB85762166800D234CA58D269A9, issued="C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=Terms of use at https://www.verisign.com/rpa \(c\)05, CN=VeriSign Class 3 Secure Server CA" is expired.
+
+http://shibboleth.ebscohost.com
+# Docasna vyjimka do 11/2010. Semik 22.9.2010
+5W: Missing Organization element.
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+6I: Missing Organization element.
+8W: IDPSO|SPSSODescriptor must define urn:oasis:names:tc:SAML:2.0:protocol support.
+# Docasna vyjimka do konce platnosti certifikatu. Semik 22.9.2010
+11W: Certificate subject="C=US, ST=Massachusetts, L=Ipswich, O=EBSCO Industries, Inc., OU=shibboleth1.epnet.com, CN=shibboleth.ebscohost.com", serial=35350F34FBD21453AD54A1A0E6891AC3, issued="O=VeriSign Trust Network, OU=VeriSign, Inc., OU=VeriSign International Server CA - Class 3, OU=www.verisign.com/CPS Incorp.by Ref. LIABILITY LTD.\(c\)97 VeriSign" has key of length 1024 required is 2048.
+
+https://shibboleth.ovid.com/entity
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+8W: IDPSO|SPSSODescriptor must define urn:oasis:names:tc:SAML:2.0:protocol support.
+11W: Certificate subject="C=US, ST=Utah, L=Sandy, O=Ovid Technologies, Inc., CN=shibboleth.ovid.com", serial=7CD483F36386CDA04FE309E2E9305275, issued="C=US, O=VeriSign, Inc., OU=VeriSign Trust Network, OU=Terms of use at https://www.verisign.com/rpa \(c\)05, CN=VeriSign Class 3 Secure Server CA" has key of length 1024 required is 2048.
+
+https://shib-test.cup.cam.ac.uk/shibboleth-sp
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://sp.ebrary.com/shibboleth
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do konce platnosti certifikatu. Semik 22.9.2010
+11W: Certificate subject="C=US, ST=California, L=Palo Alto, O=ebrary, Inc., OU=Network Operations, CN=sp.ebrary.com", serial=73D4ECCE789AEC16FDE49340130ADE02, issued="C=ZA, ST=Western Cape, L=Cape Town, O=Thawte Consulting cc, OU=Certification Services Division, CN=Thawte Premium Server CA, emailAddress=premium-server@thawte.com" has key of length 1024 required is 2048.
+
+https://sp.tshhosting.com/shibboleth
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://vnweb.hwwilsonweb.com/shibboleth
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://webdev.hwwilsonweb.com/shibboleth
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+
+# POZOR je v metadatech nazaklade neplatneho opravneni
+https://mefanet.lfp.cuni.cz/shibboleth/
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://seth.ics.muni.cz/shibboleth
+# Docasna vyjimka do 11/2010. Semik 22.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 22.9.2010
+7W: HTTPS usage is required.
+# Docasna vyjimka do 11/2010. Semik 22.9.2010
+11W: Certificate subject="C=CZ, O=Masaryk University, CN=seth.ics.muni.cz", serial=01000000000120391BBEB8, issued="C=BE, O=Cybertrust, OU=Educational CA, CN=Cybertrust Educational CA" has key of length 1024 required is 2048.
+
+https://moodlemefanet.cuni.cz/sp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 22.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+
+http://www.studentskelicence.cz/sp
+# Docasna vyjimka do 11/2010. Semik 22.9.2010
+6W: Organization: missing OrganizationDisplayName @lang='cs'.
+# Docasna vyjimka do 11/2010. Semik 22.9.2010
+7W: HTTPS usage is required.
+
+https://staging.dreamspark.com/shibboleth-sp
+# Trvala vyjimka pro externiho SP
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://downloads.channel8.msdn.com/shibboleth-sp
+# Trvala vyjimka pro externiho SP
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://xploreuat.ieee.org/shibboleth-sp
+# Trvala vyjimka pro externiho SP
+6I: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://ieeexplore.ieee.org/shibboleth-sp
+# Trvala vyjimka pro externiho SP
+6I: Organization: missing OrganizationDisplayName @lang='cs'.

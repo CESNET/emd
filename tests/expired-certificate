@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-2"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="http://lddocalhost/idp/shibboleth">
+
+    <IDPSSODescriptor protocolSupportEnumeration="urn:mace:shibboleth:1.0 urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+
+        <Extensions>
+            <shibmd:Scope xmlns:shibmd="urn:mace:shibboleth:metadata:1.0" regexp="false">ujep.cz</shibmd:Scope>
+        </Extensions>
+
+        <KeyDescriptor>
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>
+MIIDUzCCAjugAwIBAgICAt0wDQYJKoZIhvcNAQEEBQAwMjELMAkGA1UEBhMCQ1ox
+DzANBgNVBAoTBkNFU05FVDESMBAGA1UEAxMJQ0VTTkVUIENBMB4XDTA1MDQyMDEy
+NDgxNFoXDTA2MDQyMDEyNDgxNFowPzEPMA0GA1UEChMGQ0VTTkVUMQ8wDQYDVQQK
+EwZDRVNORVQxGzAZBgNVBAMTEnJhZGl1czIuZWR1cm9hbS5jejCBnzANBgkqhkiG
+9w0BAQEFAAOBjQAwgYkCgYEAyFEMOSOC1GyxfM6hH0SR+ifk1uR8PfkZDFjSU1ni
+H7rcvBb7AhvpoJGmnJZqchot4UO39PQD8kKOVHjPkiiJIOEnj6WcRjn8a0/8MUmK
+fuSlTHLBoYFXbsxK7BfkAFURdsPdjW26ezXGaUactFM+/qJx4hdDe+JDHbzIImyo
+250CAwEAAaOB6TCB5jAdBgNVHQ4EFgQUnVZfbWe1Sg5kO+gH3oZK/j7Gg4wwHwYD
+VR0jBBgwFoAU+FYa2Zp4lW20iIRVNS+qBvPXIFowNQYDVR0fBC4wLDAqoCigJoYk
+aHR0cDovL3d3dy5jZXNuZXQuY3ovcGtpL2NybC9jY2EuY3JsMA4GA1UdDwEB/wQE
+AwIF4DAtBgNVHREEJjAkgQ5qYW5AdG9tYXNlay5jeoIScmFkaXVzMi5lZHVyb2Ft
+LmN6MBkGA1UdIAQSMBAwDgYMKwYBBAG+eQECAgEBMBMGA1UdJQQMMAoGCCsGAQUF
+BwMBMA0GCSqGSIb3DQEBBAUAA4IBAQAUS7R+Sj/QHLxUMfnC00y9S8uQqfnNfEoT
+KOVfnStgT8jET3U34C8xPI+FFtpsX/0kdHO4tPL1hLa7qUTCY7m1LpHsxPZ1eniE
+DV6cLaFbTwQiYZgYKcUQS0bTwATKweBvvhb3yAPCq5IfFp5/hGUYONLOtazqud4y
+zSs6BWht6uXMmsANrxbjLUfBXmH/oskoMz4gPXtsIKi6nUEs2WKH3qNbDeqsUNND
++s2W3GLRAq3LlP4rU/Q6SgUOarbBQ8sv84lV61WJw5eL+8b/1Vc+GfUt8qEx06hN
+mdVI2CcP2mqd/n4xxpmU9wtIGptpzswGmMQ4D8NYhRHfST3/E3ev
+                    </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+
+        </KeyDescriptor>
+
+        
+        <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://idp.ujep.cz:8443/idp/profile/SAML1/SOAP/ArtifactResolution" index="1"></ArtifactResolutionService>
+
+        <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://idp.ujep.cz:8443/idp/profile/SAML2/SOAP/ArtifactResolution" index="2"></ArtifactResolutionService>
+                                   
+        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
+
+        <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" Location="https://idp.ujep.cz/idp/profile/Shibboleth/SSO"></SingleSignOnService>
+
+        
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://idp.ujep.cz/idp/profile/SAML2/POST/SSO"></SingleSignOnService>
+
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign" Location="https://idp.ujep.cz/idp/profile/SAML2/POST-SimpleSign/SSO"></SingleSignOnService>
+        
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://idp.ujep.cz/idp/profile/SAML2/Redirect/SSO"></SingleSignOnService>
+    </IDPSSODescriptor>
+
+    <AttributeAuthorityDescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+
+        <Extensions>
+            <shibmd:Scope xmlns:shibmd="urn:mace:shibboleth:metadata:1.0" regexp="false">ujep.cz</shibmd:Scope>
+
+        </Extensions>
+
+
+        <AttributeService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://idp.ujep.cz:8443/idp/profile/SAML1/SOAP/AttributeQuery"></AttributeService>
+        
+        <AttributeService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://idp.ujep.cz:8443/idp/profile/SAML2/SOAP/AttributeQuery"></AttributeService>
+        
+        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>    
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</NameIDFormat>    
+    </AttributeAuthorityDescriptor>
+
+    <Organization>
+      <OrganizationName xml:lang="cs">Univerzita Jana Evangelisty Purkyně v Ústí nad Labem</OrganizationName>
+      <OrganizationName xml:lang="en">Jan Evangelista Purkyne University in Usti nad Labem</OrganizationName>
+      <OrganizationDisplayName xml:lang="cs">Univerzita Jana Evangelisty Purkyně v Ústí nad Labem</OrganizationDisplayName>
+      <OrganizationDisplayName xml:lang="en">Jan Evangelista Purkyne University in Usti nad Labem</OrganizationDisplayName>
+      <OrganizationURL xml:lang="cs">http://www.ujep.cz/</OrganizationURL>
+
+      <OrganizationURL xml:lang="en">http://www.ujep.cz/en/welcome.html</OrganizationURL>
+    </Organization>
+
+    <ContactPerson contactType="technical">
+      <GivenName>Pavel</GivenName>
+      <SurName>Polacek</SurName>
+      <EmailAddress>pavel.polacek@ujep.cz</EmailAddress>
+
+    </ContactPerson>
+    
+</EntityDescriptor>    
