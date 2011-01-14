@@ -4,11 +4,13 @@ package emd2::Utils;
 
 use strict;
 use vars qw($VERSION @ISA %EXPORT_TAGS);
+use Sys::Syslog qw(:standard :macros);
+use Proc::ProcessTable;
 
 @ISA = qw(Exporter);
 $VERSION = "0.0.1";
 %EXPORT_TAGS = (
-                all => [qw(getNormalizedEntityID getXMLelementAStext ew2string)]
+                all => [qw(getNormalizedEntityID getXMLelementAStext ew2string logger local_die startRun stopRun )]
                 );
 # Add Everything in %EXPORT_TAGS to @EXPORT_OK
 Exporter::export_ok_tags('all');
@@ -58,5 +60,92 @@ sub ew2string {
 
   return $str;
 };
+
+my $prg_name = $0;
+$prg_name =~ s/.*\///;
+
+
+sub syslog_escape {
+  my $str = shift;
+  my @chr = split(//, $str);
+
+  for(my $i=0; $i<@chr; $i++) {
+    if (ord($chr[$i])>127) {
+      $chr[$i] = sprintf('\0x%X', ord($chr[$i]));
+    };
+  };
+
+  return join('', @chr);
+};
+
+
+sub logger {
+  my $priority = shift;
+  my $msg = shift;
+
+  openlog($prg_name, 'pid', LOG_LOCAL0);
+  setlogmask(LOG_MASK(LOG_ALERT) | LOG_MASK(LOG_CRIT) |
+	     LOG_MASK(LOG_DEBUG) | LOG_MASK(LOG_EMERG) |
+	     LOG_MASK(LOG_ERR) | LOG_MASK(LOG_INFO) |
+	     LOG_MASK(LOG_NOTICE) | LOG_MASK(LOG_WARNING));
+  syslog($priority, syslog_escape($msg));
+  closelog;
+};
+
+sub local_die {
+  my $message = shift;
+
+  logger(LOG_ERR, $message);
+  exit(1);
+};
+
+my $PID_dir="/tmp";
+
+sub startRun {
+  my $prg = $0;
+  $prg =~ s/.*\///;
+  my $pidFile = "$PID_dir/$prg.pid";
+
+  my $counter = 1;
+  while ((-e $pidFile) and ($counter > 0)) {
+    logger(LOG_INFO, "File \"$pidFile\" in way, waiting ($counter).");
+    sleep 5;
+    $counter--;
+  };
+
+  if (-e $pidFile) {
+    open(PID, "<$pidFile") or die "Can't read file \"$pidFile\"";
+    my $pid = <PID>; chomp($pid);
+    close(PID);
+
+    my $t = new Proc::ProcessTable;
+    my $found = 0;
+    foreach my $p ( @{$t->table} ){
+      $found = 1 if ($p->pid == $pid);
+    };
+
+    if ($found) {
+      my $msg = "We are already running as PID=$pid, terminating!";
+      logger(LOG_ERR, $msg);
+      exit 1;
+      die $msg;
+    }
+
+    logger(LOG_INFO, "Overwriting orphaned PID file \"$pidFile\"");
+  };
+
+  open(RUN, ">$pidFile") or die "Can't create file \"$pidFile\": $!";
+  print RUN $$;
+  close(RUN);
+};
+
+sub stopRun {
+  my $prg = $0;
+  $prg =~ s/.*\///;
+  my $pidFile = "$PID_dir/$prg.pid";
+
+  die "Can't remove file \"$pidFile\"! " unless unlink("$pidFile");
+};
+
 
 1;
