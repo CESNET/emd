@@ -4,8 +4,6 @@ use strict;
 use Data::Dumper;
 use Date::Manip;
 use XML::LibXML;
-use XML::SAX::Machines qw( :all );
-use XML::Filter::NSNormalise;
 use Sys::Syslog qw(:standard :macros);
 use AppConfig qw(:expand);
 use emd2::Utils qw (logger local_die startRun stopRun);
