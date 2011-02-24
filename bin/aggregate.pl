@@ -1,12 +1,14 @@
 #!/usr/bin/perl -w
 
 use strict;
+use lib qw(emd2/lib);
 use Data::Dumper;
 use Date::Manip;
 use XML::LibXML;
 use Sys::Syslog qw(:standard :macros);
 use AppConfig qw(:expand);
 use emd2::Utils qw (logger local_die startRun stopRun);
+use utf8;
 
 my $config = AppConfig->new
   ({
@@ -22,6 +24,8 @@ my $config = AppConfig->new
    sign_cmd      => { DEFAULT => undef },
 
    filters       => { DEFAULT => undef },
+
+   force         => { DEFAULT => undef },
 
    max_age       => { DEFAULT => 12*60*60 }, # sekundy
    validity      => { DEFAULT => '30 days'}, # cokoliv dokaze ParseDate
@@ -56,7 +60,7 @@ sub load {
   foreach my $file (grep {$_ =~ /.xml$/} @files) {
     my $parser = XML::LibXML->new;
     open my $fh, "$dir/$file" or local_die "Failed to open $dir/$file: $!";
-    binmode $fh, ":utf8";
+    #binmode $fh, ":utf8";
     my $string = join('', <$fh>);
     my $xml = $parser->parse_string($string);
     close $fh;
@@ -82,6 +86,8 @@ sub load {
     my $tag = $file; $tag =~ s/\.tag$//;
     while (my $line = <F>) {
       chomp($line);
+      next if ($line =~ /^#/);
+      next if ($line =~ /^\s*$/);
       if (exists($md{$line})) {
 	push @{$md{$line}->{tags}}, $tag;
       } else {
@@ -132,7 +138,7 @@ sub aggregate {
   $root->setNamespace($xsi_ns, 'xsi', 0);
   $root->setNamespace($ds_ns, 'ds', 0);
 
-  $root->setAttribute('Name', $validUntil);
+  $root->setAttribute('Name', $name);
   $root->setAttribute('validUntil', $validUntil);
   $root->setAttributeNS($xsi_ns, 'schemaLocation', $schemaLocation);
 
@@ -173,16 +179,20 @@ foreach my $key (split(/ *, */, $config->filters)) {
     logger(LOG_DEBUG, "Will overwrite file $f: src_mtime=$mtime, f_mtime=$stat[9].\n") if $export;
   };
 
+  $export = 1 if ($config->force);
+
   if ($export) {
     logger(LOG_DEBUG,  "Exporting $key to file $f.");
     my $doc = aggregate($entities, 'https://eduid.cz/metadata', $validUntil);
     open(F, ">$f") or local_die "Cant write to $f: $!";
-    binmode F, ":utf8";
-    print F $doc->toString;
+    #binmode F, ":utf8";
+    $doc->toFH(\*F);
+    #print F $doc->toString;
     close(F);
 
     if (defined($config->sign_cmd)) {
       my $cmd = sprintf($config->sign_cmd, $f, $config->output_dir.'/'.$key);
+      logger(LOG_DEBUG,  "Signing: '$cmd'");
       my $cmd_fh;
       open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
       my @cmd_out = <CMD>;
