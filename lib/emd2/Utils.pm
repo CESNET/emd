@@ -83,7 +83,7 @@ sub logger {
   my $priority = shift;
   my $msg = shift;
 
-  openlog($prg_name, 'pid', LOG_LOCAL0);
+  openlog($prg_name, 'pid', LOG_LOCAL1);
   setlogmask(LOG_MASK(LOG_ALERT) | LOG_MASK(LOG_CRIT) |
 	     LOG_MASK(LOG_DEBUG) | LOG_MASK(LOG_EMERG) |
 	     LOG_MASK(LOG_ERR) | LOG_MASK(LOG_INFO) |
