@@ -5,6 +5,7 @@ use lib qw(emd2/lib);
 use Data::Dumper;
 use Date::Manip;
 use XML::LibXML;
+use XML::Tidy;
 use Sys::Syslog qw(:standard :macros);
 use AppConfig qw(:expand);
 use emd2::Utils qw (logger local_die startRun stopRun);
@@ -184,10 +185,14 @@ foreach my $key (split(/ *, */, $config->filters)) {
   if ($export) {
     logger(LOG_DEBUG,  "Exporting $key to file $f.");
     my $doc = aggregate($entities, 'https://eduid.cz/metadata', $validUntil);
+    my $tidy = XML::Tidy->new('xml' => $doc->toString);
+    $tidy->tidy();
+
     open(F, ">$f") or local_die "Cant write to $f: $!";
-    #binmode F, ":utf8";
-    $doc->toFH(\*F);
+    binmode F, ":utf8";
+    #$doc->toFH(\*F);
     #print F $doc->toString;
+    print F $tidy->toString;
     close(F);
 
     if (defined($config->sign_cmd)) {
