@@ -63,7 +63,14 @@ sub load {
     open my $fh, "$dir/$file" or local_die "Failed to open $dir/$file: $!";
     #binmode $fh, ":utf8";
     my $string = join('', <$fh>);
-    my $xml = $parser->parse_string($string);
+    my $xml;
+    eval {
+      $xml = $parser->parse_string($string);
+    };
+    if ($@) {
+      my $err = $@;
+      local_die "Failed to parse file $dir/$file: $@";
+    };
     close $fh;
 
     my $root = $xml->documentElement;
