@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+# apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl libxml-tidy-perl
+
 use strict;
 use lib qw(emd2/lib);
 use Data::Dumper;
@@ -14,7 +16,8 @@ use utf8;
 my $config = AppConfig->new
   ({
     GLOBAL=> { EXPAND => EXPAND_ALL, ARGCOUNT => 1 },
-    CASE => 1
+    CASE => 1,
+    CREATE => '.*',
    },
 
    cfg           => { DEFAULT => '' },
@@ -24,7 +27,7 @@ my $config = AppConfig->new
 
    sign_cmd      => { DEFAULT => undef },
 
-   filters       => { DEFAULT => undef },
+   federations   => { DEFAULT => undef },
 
    force         => { DEFAULT => undef },
 
@@ -168,56 +171,59 @@ $config->file($config->cfg) or
 
 my $validUntil = UnixDate(ParseDate('30 days'), '%Y-%m-%dT%H:%M:%SZ');
 
-
 my $md = load($config->metadata_dir);
 
-foreach my $key (split(/ *, */, $config->filters)) {
-  my ($entities, $mtime) = filter($md, [split(/\+/, $key)]);
+foreach my $fed_id (split(/ *, */, $config->federations)) {
+  my $fed_filters = $fed_id.'_filters';
+  my $fed_name = $fed_id.'_name';
 
-  my $f = $config->output_dir."/$key-unsigned";
-  my $export = 1;
+  foreach my $key (split(/ *, */, $config->$fed_filters)) {
+    my ($entities, $mtime) = filter($md, [split(/\+/, $key)]);
 
-  if (-f $f) {
-    # Test jestli na disku je starsi fail nez ty co jsme nacetli ||
-    # jestli neni fail na disku prilis stary || nebyl fail na disku
-    # vytvoren v budoucnosti
-    my @stat = stat($f);
-    my $now = time;
-    $export = ($stat[9] < $mtime) || ($now < $stat[9]) || (($now-$stat[9])>$config->max_age);
-    logger(LOG_DEBUG, "Will overwrite file $f: src_mtime=$mtime, f_mtime=$stat[9].\n") if $export;
-  };
+    my $f = $config->output_dir."/$key-unsigned";
+    my $export = 1;
 
-  $export = 1 if ($config->force);
+    if (-f $f) {
+      # Test jestli na disku je starsi fail nez ty co jsme nacetli ||
+      # jestli neni fail na disku prilis stary || nebyl fail na disku
+      # vytvoren v budoucnosti
+      my @stat = stat($f);
+      my $now = time;
+      $export = ($stat[9] < $mtime) || ($now < $stat[9]) || (($now-$stat[9])>$config->max_age);
+      logger(LOG_DEBUG, "Will overwrite file $f: src_mtime=$mtime, f_mtime=$stat[9].\n") if $export;
+    };
 
-  if ($export) {
-    logger(LOG_DEBUG,  "Exporting $key to file $f.");
-    my $doc = aggregate($entities, 'https://eduid.cz/metadata', $validUntil);
-    my $tidy = XML::Tidy->new('xml' => $doc->toString);
-    $tidy->tidy();
+    $export = 1 if ($config->force);
 
-    open(F, ">$f") or local_die "Cant write to $f: $!";
-    binmode F, ":utf8";
-    #$doc->toFH(\*F);
-    #print F $doc->toString;
-    print F $tidy->toString;
-    close(F);
+    if ($export) {
+      logger(LOG_DEBUG,  "Exporting $key to file $f.");
+      my $doc = aggregate($entities, $config->$fed_name, $validUntil);
+      my $tidy = XML::Tidy->new('xml' => $doc->toString);
+      $tidy->tidy();
 
-    if (defined($config->sign_cmd)) {
-      my $cmd = sprintf($config->sign_cmd, $f, $config->output_dir.'/'.$key);
-      logger(LOG_DEBUG,  "Signing: '$cmd'");
-      my $cmd_fh;
-      open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
-      my @cmd_out = <CMD>;
-      close(CMD);
-      my $ret = $? >> 8;
-      if ($ret > 0) {
-	logger(LOG_ERR,  "Command $cmd terminated with error_code=$ret. Output:");
-	foreach my $line (@cmd_out) {
-	  logger(LOG_ERR, $line);
-	};	
+      open(F, ">$f") or local_die "Cant write to $f: $!";
+      binmode F, ":utf8";
+      #$doc->toFH(\*F);
+      #print F $doc->toString;
+      print F $tidy->toString;
+      close(F);
+
+      if (defined($config->sign_cmd)) {
+	my $cmd = sprintf($config->sign_cmd, $f, $config->output_dir.'/'.$key);
+	logger(LOG_DEBUG,  "Signing: '$cmd'");
+	my $cmd_fh;
+	open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
+	my @cmd_out = <CMD>;
+	close(CMD);
+	my $ret = $? >> 8;
+	if ($ret > 0) {
+	  logger(LOG_ERR,  "Command $cmd terminated with error_code=$ret. Output:");
+	  foreach my $line (@cmd_out) {
+	    logger(LOG_ERR, $line);
+	  };	
+	};
       };
     };
   };
 };
-
 stopRun;
