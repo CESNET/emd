@@ -37,10 +37,12 @@ use constant CHECK_SAML11 => 9;
 use constant CHECK_SAML10 => 10;
 use constant CHECK_X509CERTIFICATE => 11;
 use constant CHECK_EXTENSIONS_SCOPE => 12;
+use constant CHECK_DISCOVERY_RESPONSE_BINDING => 13;
 
-my $smd_ns = 'urn:mace:shibboleth:metadata:1.0';
-my $md_ns  = 'urn:oasis:names:tc:SAML:2.0:metadata';
-my $ds_ns  = 'http://www.w3.org/2000/09/xmldsig#';
+my $smd_ns     = 'urn:mace:shibboleth:metadata:1.0';
+my $md_ns      = 'urn:oasis:names:tc:SAML:2.0:metadata';
+my $ds_ns      = 'http://www.w3.org/2000/09/xmldsig#';
+my $idpdisc_ns = 'urn:oasis:names:tc:SAML:profiles:SSO:idp-discovery-protocol';
 
 my $xsd_schema = '/usr/share/xml/opensaml/saml-schema-metadata-2.0.xsd';
 my $LibXMLSchema;
@@ -466,6 +468,17 @@ sub checkExtensionsScope {
   return (undef, ["IDPSSODescriptor/Extensions/Scope is missing. Found '$path'.", $node->nodePath]);
 };
 
+sub checkDiscoveryResponseBinding {
+  my $node = shift;
+
+  foreach my $dr ($node->getElementsByTagNameNS($idpdisc_ns, 'DiscoveryResponse')) {
+    return (undef, ['DiscoveryResponse is missing required Binding attribute.', $dr->nodePath])
+      unless ($node->hasAttribute('Binding'));
+  };
+
+  return 1;
+};
+
 sub print_error {
   my $code = shift;
   my $message = shift || 'Unknown error';
@@ -523,6 +536,9 @@ sub checkEntityDescriptor {
     ($res, $message) = checkExtensionsScope($root);
     push @errors, (CHECK_EXTENSIONS_SCOPE, $message) unless($res);
   };
+
+  ($res, $message) = checkDiscoveryResponseBinding($root);
+  push @errors, (CHECK_DISCOVERY_RESPONSE_BINDING, $message) unless($res);
 
   if (@errors) {
     my %errors = @errors;
