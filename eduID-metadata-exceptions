@@ -352,3 +352,13 @@ https://xploreuat.ieee.org/shibboleth-sp
 https://ieeexplore.ieee.org/shibboleth-sp
 # Trvala vyjimka pro externiho SP
 6I: Organization: missing OrganizationDisplayName @lang='cs'.
+
+https://idp.amu.cz/idp/shibboleth
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.
+
+http://idptoo.osu.cz/simplesaml/saml2/idp/metadata.php
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
+8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
