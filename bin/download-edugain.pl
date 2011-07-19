@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use lib qw(lib);
+use lib qw(emd2/lib);
 use Data::Dumper;
 use AppConfig qw(:expand);
 use XML::LibXML;
