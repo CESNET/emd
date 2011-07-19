@@ -6,11 +6,14 @@ use strict;
 use vars qw($VERSION @ISA %EXPORT_TAGS);
 use Sys::Syslog qw(:standard :macros);
 use Proc::ProcessTable;
+use File::Temp qw(tempfile);
+use Digest::MD5 qw (md5_hex md5_base64);
 
 @ISA = qw(Exporter);
 $VERSION = "0.0.1";
 %EXPORT_TAGS = (
-                all => [qw(getNormalizedEntityID getXMLelementAStext ew2string logger local_die startRun stopRun )]
+                all => [qw(getNormalizedEntityID getXMLelementAStext ew2string
+			   logger local_die startRun stopRun store_to_file prg_name)]
                 );
 # Add Everything in %EXPORT_TAGS to @EXPORT_OK
 Exporter::export_ok_tags('all');
@@ -64,6 +67,9 @@ sub ew2string {
 my $prg_name = $0;
 $prg_name =~ s/.*\///;
 
+sub prg_name {
+  return $prg_name;
+};
 
 sub syslog_escape {
   my $str = shift;
@@ -147,5 +153,33 @@ sub stopRun {
   die "Can't remove file \"$pidFile\"! " unless unlink("$pidFile");
 };
 
+sub store_to_file {
+  my $filename = shift;
+  my $content = shift;
+
+  my $res = 1;
+
+  if ( -f $filename ) {
+    my $c = $content; utf8::encode($c);
+    my $md5_new = md5_hex($c);
+    my $cmd = 'md5sum '.$filename.' | sed "s/ .*//"';
+    my $old_md5sum = `$cmd`; chomp($old_md5sum);
+
+    # Obsah souboru se nezmenil?
+    return 0 if ($md5_new eq $old_md5sum);
+  } else {
+    # Soubor neexistuje
+    $res = 2;
+  };
+
+  my ($tmp_fh, $tmp_filename) = tempfile("/tmp/emd-utils`-XXXXXX");
+  binmode $tmp_fh, ":utf8";
+  print $tmp_fh $content;
+  close($tmp_fh);
+  rename($tmp_filename, "$filename") or die "Failed to move $tmp_filename to $filename: $!";
+  chmod(0644, "$filename");
+
+  return $res;
+};
 
 1;

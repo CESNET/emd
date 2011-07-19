@@ -76,7 +76,11 @@ sub checkXMLValidity {
   if ($@) {
     my $msg = $@;
     $msg =~ s/\n//g;
-    return (undef, $msg);
+    if ($msg =~ /^(unknown-[0-9a-f\: ]+)/) {
+      my $fname = $1;
+      $msg =~ s/$fname//g;
+    };
+    return (undef, [$msg, ''], $doc);
   };
 
 
@@ -488,11 +492,13 @@ sub print_error {
 
 sub checkEntityDescriptor {
   my $xml = shift;
+  my @errors;
 
   my ($res, $message, $dom) = checkXMLValidity($xml);
-  return (CHECK_FAILED, { CHECK_XML_VALIDITY, [$message, '']}) unless($res);
-
-  my @errors;
+  if ((not defined($res)) and (not defined($dom))) {
+    return (CHECK_FAILED, { CHECK_XML_VALIDITY, [$message, '']});
+  };
+  push @errors, (CHECK_XML_VALIDITY, $message) unless($res);
 
   my $root = $dom->documentElement;
 
@@ -523,8 +529,8 @@ sub checkEntityDescriptor {
   ($res, $message) = checkOrganizationEN($root, 1);
   push @errors, (CHECK_ORGANIZATION_EN, $message) unless($res);
 
-  ($res, $message) = checkOrganizationCS($root, 1);
-  push @errors, (CHECK_ORGANIZATION_CS, $message) unless($res);
+#  ($res, $message) = checkOrganizationCS($root, 1);
+#  push @errors, (CHECK_ORGANIZATION_CS, $message) unless($res);
 
   ($res, $message) = checkLocation($root);
   push @errors, (CHECK_ENDPOINTS, $message) unless($res);
