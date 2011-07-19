@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+# libxml-libxml-perl libproc-processtable-perl libcrypt-openssl-x509-perl opensaml2-schemas
+
 use strict;
 use lib qw(lib);
 use Data::Dumper;
