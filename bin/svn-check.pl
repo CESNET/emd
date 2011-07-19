@@ -17,6 +17,7 @@ my $config = AppConfig->new
    svn_config_dir        => { DEFAULT => undef },
    svn_data_dir          => { DEFAULT => undef },
    svn_repository        => { DEFAULT => undef },
+   svn_module            => { DEFAULT => 'metadata' },
    aggregate             => { DEFAULT => undef },
  );
 
@@ -32,8 +33,9 @@ my $repository = 0;
 my $local = 0;
 my $location = 0;
 my $loc_dir = $config->svn_data_dir;
+my $svn_module = $config->svn_module;
 while (my $line = <SVNI>) {
-  $location = 1 if ($line =~ m,^Path: metadata,);
+  $location = 1 if ($line =~ m,^Path: $svn_module,);
   $location = 2 if ($line =~ m,^Path: $loc_dir,);
   if ($line =~ /^Revision: (\d+)/) {
     my $rev = $1;
