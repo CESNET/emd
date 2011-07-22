@@ -19,6 +19,7 @@ my $config = AppConfig->new
    svn_repository        => { DEFAULT => undef },
    svn_module            => { DEFAULT => 'metadata' },
    aggregate             => { DEFAULT => undef },
+   aggregate_cmd         => { DEFAULT => undef },
  );
 
 $config->args(\@ARGV) or
@@ -59,7 +60,8 @@ if ($repository ne $local) {
     logger(LOG_DEBUG,  "Local repository successfully updated.");
     foreach my $line (@out) { logger(LOG_ERR, $line); };	
     if ($config->aggregate) {
-      open(AGG, '/usr/bin/perl /home/mdx/emd2/bin/aggregate.pl --cfg /home/mdx/aggregate.cfg 2>&1|') or die "Failed to execute aggregate: $?";
+      my $cmd = $config->aggregate_cmd;
+      open(AGG, "$cmd 2>&1|") or die "Failed to execute aggregate: $?";
       my @out = <AGG>;
       close(AGG);
       my $ret = $? >> 8;
