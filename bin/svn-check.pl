@@ -46,7 +46,7 @@ while (my $line = <SVNI>) {
 close(SVNI);
 
 if ($repository ne $local) {
-  logger(LOG_DEBUG,  "Repository has changed (remote=$repository, local=$local)");
+  logger(LOG_DEBUG,  "Repository $svn_module has changed (remote=$repository, local=$local)");
   my $cmd = 'svn checkout -q --config-dir '.$config->svn_config_dir.' '.$config->svn_repository.' '.$config->svn_data_dir;
   open(SVNC, $cmd.' 2>&1 |') or die "Failed to execute svn checkout: $?";
   my @out = <SVNC>;
