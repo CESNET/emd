@@ -108,7 +108,7 @@ sub local_die {
 my $PID_dir="/tmp";
 
 sub startRun {
-  my $prg = $0;
+  my $prg = shift || $0;
   $prg =~ s/.*\///;
   my $pidFile = "$PID_dir/$prg.pid";
 
@@ -146,7 +146,7 @@ sub startRun {
 };
 
 sub stopRun {
-  my $prg = $0;
+  my $prg = shift || $0;
   $prg =~ s/.*\///;
   my $pidFile = "$PID_dir/$prg.pid";
 

@@ -3,7 +3,7 @@
 # apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl libxml-tidy-perl
 
 use strict;
-use lib qw(emd2/lib);
+use lib qw(emd2/lib lib);
 use Data::Dumper;
 use Date::Manip;
 use XML::LibXML;
@@ -162,12 +162,12 @@ sub aggregate {
   return $dom;
 };
 
-startRun;
-
 $config->args(\@ARGV) or
   die "Can't parse cmdline args";
 $config->file($config->cfg) or
   die "Can't open config file \"".$config->cfg."\": $!";
+
+startRun($config->cfg);
 
 my $validUntil = UnixDate(ParseDate('30 days'), '%Y-%m-%dT%H:%M:%SZ');
 
@@ -226,4 +226,5 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     };
   };
 };
-stopRun;
+
+stopRun($config->cfg);
