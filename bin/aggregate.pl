@@ -38,6 +38,9 @@ my $config = AppConfig->new
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
 my $xsi_ns = 'http://www.w3.org/2001/XMLSchema-instance';
 my $ds_ns = 'http://www.w3.org/2000/09/xmldsig#';
+my $mdrpi_ns = 'urn:oasis:names:tc:SAML:metadata:rpi';
+my $mdui_ns = 'urn:oasis:names:tc:SAML:metadata:ui';
+
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
 
 my $IdP_tag = 'idp';
@@ -135,6 +138,75 @@ sub filter {
   return (\%md, $mtime);
 };
 
+sub eduGAIN_root {
+  my $doc_root = shift;
+
+  $doc_root->setNamespace($mdrpi_ns, 'mdrpi', 0);
+  $doc_root->setNamespace($mdui_ns, 'mdui', 0);
+
+  #<Extensions>
+  #    <mdrpi:PublicationInfo xmlns:mdrpi="urn:oasis:names:tc:SAML:metadata:rpi" creationInstant="2012-04-02T11:30:00Z" publisher="https://www.eduid.cz/edugain/edugain.xml">
+  #        <mdrpi:UsagePolicy xml:lang="en">https://www.eduid.cz/edugain/tou.txt</mdrpi:UsagePolicy>
+  #    </mdrpi:PublicationInfo>
+  #</Extensions>
+
+  my $tou_comment = new XML::LibXML::Comment(' Use of this metadata is subject to the Terms of Use at https://www.eduid.cz/edugain/tou.txt ');
+  $doc_root->appendChild($tou_comment);
+
+  my $extensions = new XML::LibXML::Element('Extensions');
+  $doc_root->addChild($extensions);
+
+  my $pub_info = new XML::LibXML::Element('mdrpi:PublicationInfo');
+  $pub_info->setAttribute('publisher', 'https://metadata.eduid.cz/entities/eduid2edugain'); # TODO - nejaky jiny URL
+  $pub_info->setAttribute('creationInstant', UnixDate(ParseDate('now'), '%Y-%m-%dT%H:%M:%S%Z'));
+  $extensions->addChild($pub_info);
+  my $us_pol = new XML::LibXML::Element('mdrpi:UsagePolicy');
+  $us_pol->setAttribute('xml:lang', 'en');
+  $us_pol->appendText('https://www.eduid.cz/edugain/tou.txt');
+  $pub_info->addChild($us_pol);
+};
+
+sub eduGAIN_entity {
+  my $entity = shift;
+
+  # Najit Extensions
+  my @ext = $entity->getElementsByTagNameNS($saml20_ns, 'Extensions');
+  my $ext;
+  unless (@ext) {
+    # Nepovedlo se najit Extensions - takovahle entita by se vubec
+    # nemela dostat do skladu, kontroluje se to pri vkladani.
+
+    # TODO: Vytvorit
+  } else {
+    $ext = $ext[0];
+  };
+
+  my $ext = new XML::LibXML::Element('Extensions');
+  $entity->addChild($ext);
+
+  # <mdrpi:RegistrationInfo xmlns:mdrpi="urn:oasis:names:tc:SAML:metadata:rpi" registrationAuthority="http://www.eduid.cz/">
+  #   <mdrpi:RegistrationPolicy xml:lang="en">http://www.eduid.cz/wiki/_media/en/eduid/policy/policy_eduid_en-1_1.pdf</mdrpi:RegistrationPolicy>
+  #   <mdrpi:RegistrationPolicy xml:lang="cs">http://www.eduid.cz/wiki/_media/eduid/policy/policy_eduid_cz-1_1-3.pdf</mdrpi:RegistrationPolicy>
+  # </mdrpi:RegistrationInfo>
+  my $ri = new XML::LibXML::Element('mdrpi:RegistrationInfo');
+  $ri->setAttribute('registrationAuthority', 'http://www.eduid.cz/');
+  $ext->addChild($ri);
+
+  my $rp_en = new XML::LibXML::Element('mdrpi:RegistrationPolicy');
+  $rp_en->setAttribute('xml:lang', 'en');
+  $rp_en->appendText('http://www.eduid.cz/wiki/_media/en/eduid/policy/policy_eduid_en-1_1.pdf');
+  $ri->addChild($rp_en);
+
+  my $rp_cs = new XML::LibXML::Element('mdrpi:RegistrationPolicy');
+  $rp_cs->setAttribute('xml:lang', 'cs');
+  $rp_cs->appendText('http://www.eduid.cz/wiki/_media/eduid/policy/policy_eduid_cz-1_1-3.pdf');
+  $ri->addChild($rp_cs);
+
+  
+
+
+};
+
 sub aggregate {
   my $md = shift;
   my $name = shift;
@@ -153,8 +225,11 @@ sub aggregate {
   $root->setAttribute('validUntil', $validUntil);
   $root->setAttributeNS($xsi_ns, 'schemaLocation', $schemaLocation);
 
+  eduGAIN_root($root) if ($name eq 'eduid.cz-edugain');
+
   foreach my $entityID (keys %{$md}) {
     my $entity = $md->{$entityID}->{md}->cloneNode(1);
+    eduGAIN_entity($entity) if ($name eq 'eduid.cz-edugain');
     $dom->adoptNode($entity);
     $root->addChild($entity);
   };
