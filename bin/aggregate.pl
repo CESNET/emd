@@ -183,7 +183,7 @@ sub eduGAIN_entity {
 #  };
 
   my $ext = new XML::LibXML::Element('Extensions');
-  $entity->addChild($ext);
+  $entity->insertBefore($ext, $entity->firstChild);
 
   # <mdrpi:RegistrationInfo xmlns:mdrpi="urn:oasis:names:tc:SAML:metadata:rpi" registrationAuthority="http://www.eduid.cz/">
   #   <mdrpi:RegistrationPolicy xml:lang="en">http://www.eduid.cz/wiki/_media/en/eduid/policy/policy_eduid_en-1_1.pdf</mdrpi:RegistrationPolicy>
