@@ -170,16 +170,16 @@ sub eduGAIN_entity {
   my $entity = shift;
 
   # Najit Extensions
-  my @ext = $entity->getElementsByTagNameNS($saml20_ns, 'Extensions');
-  my $ext;
-  unless (@ext) {
-    # Nepovedlo se najit Extensions - takovahle entita by se vubec
-    # nemela dostat do skladu, kontroluje se to pri vkladani.
-
-    # TODO: Vytvorit
-  } else {
-    $ext = $ext[0];
-  };
+#  my @ext = $entity->getElementsByTagNameNS($saml20_ns, 'Extensions');
+#  my $ext;
+#  unless (@ext) {
+#    # Nepovedlo se najit Extensions - takovahle entita by se vubec
+#    # nemela dostat do skladu, kontroluje se to pri vkladani.
+#
+#    # TODO: Vytvorit
+#  } else {
+#    $ext = $ext[0];
+#  };
 
   my $ext = new XML::LibXML::Element('Extensions');
   $entity->addChild($ext);
