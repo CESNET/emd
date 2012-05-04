@@ -119,6 +119,10 @@ if ($response->is_success) {
   exit 1;
 };
 
+
+
+die;
+
 my $parser = XML::LibXML->new;
 open(F, '<'.$config->metadata_file) or do {
   logger(LOG_ERR, sprintf('Failed to open file %s: %s',
