@@ -119,10 +119,6 @@ if ($response->is_success) {
   exit 1;
 };
 
-
-
-die;
-
 my $parser = XML::LibXML->new;
 open(F, '<'.$config->metadata_file) or do {
   logger(LOG_ERR, sprintf('Failed to open file %s: %s',
@@ -150,6 +146,8 @@ eval {
 };
 if ($@) {
   logger(LOG_ERR, $@);
+  logger(LOG_ERR, "Failed to valiadate metadata against schema - terminating");
+  exit 1;
 };
 
 # Nacteni ignore listu
