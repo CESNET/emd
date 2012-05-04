@@ -11,6 +11,7 @@ use HTTP::Request;
 use LWP::UserAgent;
 use Date::Manip;
 use Date::Format;
+use File::Temp qw(tempfile);
 
 sub load_ignore_list {
   my $file = shift;
@@ -25,6 +26,37 @@ sub load_ignore_list {
   };
 
   return %ign;
+};
+
+sub verify_signature {
+  my $content = shift;
+  my $signing_cert = shift;
+
+  my ($fh, $filename) = tempfile('/tmp/edugain-XXXXXX');
+  print $fh $content;
+  close ($fh);
+
+  my ($fh_xmlsec1, $xmlsec1) = tempfile('/tmp/xmllsec-XXXXXX');
+  `/usr/bin/xmlsec1 --verify --trusted-pem $signing_cert --id-attr:ID urn:oasis:names:tc:SAML:2.0:metadata:EntitiesDescriptor $filename >$xmlsec1 2>&1`;
+  my $err = $? >> 8;
+
+  unless ($err) {
+    unlink($xmlsec1);
+    unlink($filename);
+    return 1;
+  } else {
+    open(F, "<$xmlsec1");
+    foreach my $line (<F>) { logger(LOG_ERR, $line); };
+    logger(LOG_ERR, 'Failed to execute xmlsec1: '.$err);
+
+    unlink($xmlsec1);
+    unlink($filename);
+
+    return;
+  };
+
+return;
+
 };
 
 my $md_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
@@ -64,26 +96,28 @@ logger(LOG_INFO, sprintf('Metadata download %s: %s',
 			 $config->metadata_url,
 			 $response->code));
 if ($response->is_success) {
-  # V podstate bychom vubec nemuseli stena metadata ukladat na disk v
-  # tehle forme. Ulozene mame data rozsekana na entityID. Takze tady
-  # se klidne muze stat ze ulozime neco co vubec neni XML. Dal
-  # nasleduje validace podpisu u souboru na disku... opetovne cteni je
-  # docela hloupe, ale mozna lepsi nez validovat neco na disku a pak
-  # pracovat s necim jinym v pameti.
-  if (store_to_file($config->metadata_file, $response->content)==0) {
-    logger(LOG_INFO, sprintf('Nothing new. Terminating.'));
+  # Overeni podpisu
+  if (verify_signature($response->content, $config->signing_cert)) {
+    # V podstate bychom vubec nemuseli stena metadata ukladat na disk v
+    # tehle forme. Ulozene mame data rozsekana na entityID. Takze tady
+    # se klidne muze stat ze ulozime neco co vubec neni XML. Dal
+    # nasleduje validace podpisu u souboru na disku... opetovne cteni je
+    # docela hloupe, ale mozna lepsi nez validovat neco na disku a pak
+    # pracovat s necim jinym v pameti.
+    if (store_to_file($config->metadata_file, $response->content)==0) {
+      logger(LOG_INFO, sprintf('Nothing new. Terminating.'));
+      exit 0;
+    };
+    logger(LOG_INFO, sprintf('Updated file %s with source metadata',
+			     $config->metadata_file));
+  } else {
+    logger(LOG_INFO, sprintf('Failed to verify downloaded XML data signature. Terminating.'));
     exit 0;
   };
-  logger(LOG_INFO, sprintf('Updated file %s with source metadata',
-			   $config->metadata_file));
 } else {
   logger(LOG_ERR, sprintf('Failed to download metadata.'));
   exit 1;
 };
-
-# Overeni podpisu.
-# xmlsec1 --verify --trusted-pem /home/edugain/edugain-cert.pem  /tmp/edugain-10.xml
-# Bohuzel xmlsec1 to nezvladne, tak do vyreseni to zatim neoverujeme.
 
 my $parser = XML::LibXML->new;
 open(F, '<'.$config->metadata_file) or do {

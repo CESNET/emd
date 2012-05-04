@@ -157,7 +157,7 @@ sub eduGAIN_root {
   $doc_root->addChild($extensions);
 
   my $pub_info = new XML::LibXML::Element('mdrpi:PublicationInfo');
-  $pub_info->setAttribute('publisher', 'https://metadata.eduid.cz/entities/eduid2edugain'); # TODO - nejaky jiny URL
+  $pub_info->setAttribute('publisher', 'https://metadata.eduid.cz/entities/eduid2edugain');
   my $ci = UnixDate(Date_ConvTZ(ParseDate('now'),UnixDate(ParseDate('now'), '%Z'), 'Z'), '%Y-%m-%dT%H:%M:%SZ');
   $pub_info->setAttribute('creationInstant', $ci);
   $extensions->addChild($pub_info);
