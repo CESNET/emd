@@ -476,8 +476,9 @@ sub checkDiscoveryResponseBinding {
   my $node = shift;
 
   foreach my $dr ($node->getElementsByTagNameNS($idpdisc_ns, 'DiscoveryResponse')) {
+#    die $dr->toString;
     return (undef, ['DiscoveryResponse is missing required Binding attribute.', $dr->nodePath])
-      unless ($node->hasAttribute('Binding'));
+      unless ($dr->hasAttribute('Binding'));
   };
 
   return 1;

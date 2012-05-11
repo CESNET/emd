@@ -19,7 +19,7 @@ my @tests = (
 	      errors => {
 			 emd2::Checker::CHECK_XML_VALIDITY => [':1: parser error : Start tag expected, \'<\' not found
 bla bla
-^ at lib/emd2/Checker.pm line 59
+^
 ', '']
 			},
 	     },
@@ -50,38 +50,44 @@ bla bla
 	     {
 	      file => 'tests/multiple-org',
 	      errors => {
-#			 emd2::Checker::CHECK_ORGANIZATION_EN =>
-#			   ['Found multiple Organization elements. There must be exactly one.',
-#			    '/*'],
-#			 emd2::Checker::CHECK_ORGANIZATION_CS =>
-#			   ['Found multiple Organization elements. There must be exactly one.',
-#			    '/*'],
-# od 30. 3. 2011 tento problem odhali uz kontrola vuci schematu
+			 emd2::Checker::CHECK_ORGANIZATION_EN =>
+			   ['Found multiple Organization elements. There must be exactly one.',
+			    '/*'],
+			 emd2::Checker::CHECK_ORGANIZATION_CS =>
+			   ['Found multiple Organization elements. There must be exactly one.',
+			    '/*'],
 			 emd2::Checker::CHECK_XML_VALIDITY =>
-			 ["Element '{urn:oasis:names:tc:SAML:2.0:metadata}Organization': This element is not expected. Expected is one of ( {urn:oasis:names:tc:SAML:2.0:metadata}ContactPerson, {urn:oasis:names:tc:SAML:2.0:metadata}AdditionalMetadataLocation ).",
-			  '']
+			 ["Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}Organization': This element is not expected. Expected is one of ( {urn:oasis:names:tc:SAML:2.0:metadata}ContactPerson, {urn:oasis:names:tc:SAML:2.0:metadata}AdditionalMetadataLocation ).",
+			  ''],
+			 emd2::Checker::CHECK_X509CERTIFICATE =>
+			   ['Certificate subject="DC=cz, DC=cesnet-ca, O=University of J. E. Purkyne, CN=idp.ujep.cz", serial=42B387AC, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" is expired.',
+			    '/*/*[1]/*[2]/ds:KeyInfo/ds:X509Data/ds:X509Certificate'],
 			},
 	     },
 	     {
 	      file => 'tests/missing-tech-c',
 	      errors => {
-#			 emd2::Checker::CHECK_TECHNICAL_CONTACT =>
-#			 ['Technical contact is missing.', '/*']
-# od 30. 3. 2011 tento problem odhali uz kontrola vuci schematu
-			 emd2::Checker::CHECK_XML_VALIDITY =>			 
-			 ["Element '{urn:oasis:names:tc:SAML:2.0:metadata}ContactPerson', attribute 'contactType': [facet 'enumeration'] The value 'DDtechnical' is not an element of the set {'technical', 'support', 'administrative', 'billing', 'other'}.Element '{urn:oasis:names:tc:SAML:2.0:metadata}ContactPerson', attribute 'contactType': 'DDtechnical' is not a valid value of the atomic type '{urn:oasis:names:tc:SAML:2.0:metadata}ContactTypeType'.",
-			  '']
+			 emd2::Checker::CHECK_TECHNICAL_CONTACT =>
+			 ['Technical contact is missing.', '/*'],
+			 emd2::Checker::CHECK_XML_VALIDITY =>
+			 ["Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}ContactPerson', attribute 'contactType': [facet 'enumeration'] The value 'DDtechnical' is not an element of the set {'technical', 'support', 'administrative', 'billing', 'other'}.Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}ContactPerson', attribute 'contactType': 'DDtechnical' is not a valid value of the atomic type '{urn:oasis:names:tc:SAML:2.0:metadata}ContactTypeType'.",
+			  ''],
+			 emd2::Checker::CHECK_X509CERTIFICATE =>
+			 ['Certificate subject="DC=cz, DC=cesnet-ca, O=University of J. E. Purkyne, CN=idp.ujep.cz", serial=42B387AC, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" is expired.',
+			  '/*/*[1]/*[2]/ds:KeyInfo/ds:X509Data/ds:X509Certificate'],
 			},
 	     },
 	     {
 	      file => 'tests/missing-email-tech-c',
 	      errors => {
-#			 emd2::Checker::CHECK_TECHNICAL_CONTACT =>
-#			 ['Technical contact must have EmailAddress.', '/*/*[4]']
-# od 30. 3. 2011 tento problem odhali uz kontrola vuci schematu
+			 emd2::Checker::CHECK_TECHNICAL_CONTACT =>
+			 ['Technical contact must have EmailAddress.', '/*/*[4]'],
 			 emd2::Checker::CHECK_XML_VALIDITY =>
-			 ["Element '{urn:oasis:names:tc:SAML:2.0:metadata}XEmailAddress': This element is not expected. Expected is one of ( {urn:oasis:names:tc:SAML:2.0:metadata}EmailAddress, {urn:oasis:names:tc:SAML:2.0:metadata}TelephoneNumber ).",
-			  '']
+			 ["Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}XEmailAddress': This element is not expected. Expected is one of ( {urn:oasis:names:tc:SAML:2.0:metadata}EmailAddress, {urn:oasis:names:tc:SAML:2.0:metadata}TelephoneNumber ).",
+			  ''],
+			 emd2::Checker::CHECK_X509CERTIFICATE =>
+			 ['Certificate subject="DC=cz, DC=cesnet-ca, O=University of J. E. Purkyne, CN=idp.ujep.cz", serial=42B387AC, issued="DC=cz, DC=cesnet-ca, CN=CESNET CA" is expired.',
+			  '/*/*[1]/*[2]/ds:KeyInfo/ds:X509Data/ds:X509Certificate'],
 			},
 	     },
 	     {
