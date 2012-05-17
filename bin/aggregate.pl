@@ -40,6 +40,7 @@ my $xsi_ns = 'http://www.w3.org/2001/XMLSchema-instance';
 my $ds_ns = 'http://www.w3.org/2000/09/xmldsig#';
 my $mdrpi_ns = 'urn:oasis:names:tc:SAML:metadata:rpi';
 my $mdui_ns = 'urn:oasis:names:tc:SAML:metadata:ui';
+my $mdeduid_ns = 'http://eduid.cz/schema/metadata/1.0';
 
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
 
@@ -57,7 +58,6 @@ sub tidyEntityDescriptor {
 sub load {
   my $dir = shift;
   my %md;
-  my %tag;
 
   opendir(DIR, $dir) || local_die "Can't opendir $dir: $!";
   my @files = grep { -f "$dir/$_" } readdir(DIR);
@@ -91,6 +91,19 @@ sub load {
       push @{$md{$entityID}->{tags}}, $SP_tag;
     } else {
       local_die "entityID=$entityID neni SP ani IdP???";
+    };
+
+    # Zkontrolovat jestli entita nechce republishnout do nektery dalsi federace
+    foreach my $rr (@{$root->getElementsByTagNameNS($mdeduid_ns, 'RepublishRequest')}) {
+      foreach my $rt ($rr->childNodes) {
+	if ($rt->nodeName =~ /:RepublishTarget$/) {
+	  my $rt_value = $rt->textContent;
+
+	  if ($rt_value eq 'http://edugain.org/') {
+	    push @{$md{$entityID}->{tags}}, 'eduid2edugain';
+	  };
+	};
+      };
     };
   };
 
@@ -202,10 +215,6 @@ sub eduGAIN_entity {
   $rp_cs->setAttribute('xml:lang', 'cs');
   $rp_cs->appendText('http://www.eduid.cz/wiki/_media/eduid/policy/policy_eduid_cz-1_1-3.pdf');
   $ri->addChild($rp_cs);
-
-  
-
-
 };
 
 sub aggregate {
