@@ -38,17 +38,21 @@ use constant CHECK_SAML10 => 10;
 use constant CHECK_X509CERTIFICATE => 11;
 use constant CHECK_EXTENSIONS_SCOPE => 12;
 use constant CHECK_DISCOVERY_RESPONSE_BINDING => 13;
+use constant CHECK_UI_INFO => 14;
 
 my $smd_ns     = 'urn:mace:shibboleth:metadata:1.0';
 my $md_ns      = 'urn:oasis:names:tc:SAML:2.0:metadata';
 my $ds_ns      = 'http://www.w3.org/2000/09/xmldsig#';
 my $idpdisc_ns = 'urn:oasis:names:tc:SAML:profiles:SSO:idp-discovery-protocol';
+my $eduidmd_ns = "http://eduid.cz/schema/metadata/1.0";
+my $mdui_ns    = "urn:oasis:names:tc:SAML:metadata:ui";
 
-my $xsd_schema = '/usr/share/xml/opensaml/saml-schema-metadata-2.0.xsd';
-my $LibXMLSchema;
+my $saml2_metadata_schema = '/usr/share/xml/opensaml/saml-schema-metadata-2.0.xsd';
+$XML::LibXML::Error::WARNINGS=0;
 
 sub checkXMLValidity {
   my $xml = shift;
+  my $schema = shift;
 
   return (undef, 'Empty String') if ((not defined($xml)) or ($xml eq ''));
 
@@ -65,11 +69,11 @@ sub checkXMLValidity {
 
   # test validity vuci schematu
   eval {
-    if (not defined($LibXMLSchema)){
-      $LibXMLSchema = XML::LibXML::Schema->new(
-					       location => $xsd_schema,
+    #if (not defined($LibXMLSchema)){
+      my $LibXMLSchema = XML::LibXML::Schema->new(
+					       location => $schema
 					      );
-    };
+    #};
     $LibXMLSchema->validate($doc);
   };
 
@@ -450,9 +454,14 @@ sub checkEntityID {
     return (undef, ["Entity ID must not be IP address.", $node->nodePath], $IdP, $SP, $v10, $v11, $v20);
   };
 
+  my @republishTargets;
+  foreach my $republishTarget ($node->getElementsByTagNameNS($eduidmd_ns, 'RepublishTarget')) {
+    push @republishTargets, $republishTarget->textContent;
+  };
+
   #warn "$entityID: IdP=$IdP, SP=$SP, V1.0=$v10, V1.1=$v11, V2.0=$v20\n";
 
-  return (1, undef, $IdP, $SP, $v10, $v11, $v20);
+  return (1, undef, $IdP, $SP, $v10, $v11, $v20, \@republishTargets);
 };
 
 sub checkExtensionsScope {
@@ -471,6 +480,54 @@ sub checkExtensionsScope {
 
   return (undef, ["IDPSSODescriptor/Extensions/Scope is missing. Found '$path'.", $node->nodePath]);
 };
+
+sub checkUIInfo {
+  my $node = shift;
+
+  my @UIinfo;
+  my $path = $node->nodePath;
+  foreach my $descriptor ($node->getElementsByTagNameNS($md_ns, 'IDPSSODescriptor'),
+			  $node->getElementsByTagNameNS($md_ns, 'SPSSODescriptor')) {
+    $path = $descriptor->nodePath;
+    foreach my $extensions ($descriptor->getElementsByTagNameNS($md_ns, 'Extensions')) {
+      $path = $extensions->nodePath;
+      foreach my $UIinfo ($extensions->getElementsByTagNameNS($mdui_ns, 'UIInfo')) {
+	push @UIinfo, $UIinfo;
+      };
+    };
+  };
+
+  if (@UIinfo) {
+    # Opravdu tech UIInfo muze byt vic? Spis asi nee ne?
+    foreach my $UIinfo (@UIinfo) {
+      foreach my $elementName ('DisplayName', 'Description') {
+	if (my $elements = $node->getElementsByTagNameNS($mdui_ns, $elementName)) {
+	  my @lang;
+	  foreach my $element (@{$elements}) {
+	    my $elementValue = $element->textContent || '';
+	    if ($elementValue =~ /^\s*$/m) {
+	      return (undef, ['Element '.$elementName.' may not be empty.', $element->nodePath]);
+	    };
+	    push @lang, $element->getAttribute('xml:lang') || '';
+	  };
+	  foreach my $lang ('en', 'cs') {
+	    unless (grep {$_ eq $lang} @lang) {
+	      return (undef, ['Element '.$elementName.' must have lang='.$lang.' version.', $UIinfo->nodePath]);
+	    };
+	  };
+	} else {
+	  return (undef, ['UIInfo is missing required '.$elementName.' element.', $UIinfo->nodePath]);
+	};
+      };
+    };
+    # Zadny problem nenalezen, tak to asi bude OK
+    return 1;
+  } else {
+    return (undef, ["IDPSSODescriptor|SPSSODescriptor/Extensions/UIInfo is missing. Found '$path'.",
+		    $node->nodePath]);
+  };
+};
+
 
 sub checkDiscoveryResponseBinding {
   my $node = shift;
@@ -495,11 +552,16 @@ sub checkEntityDescriptor {
   my $xml = shift;
   my @errors;
 
-  my ($res, $message, $dom) = checkXMLValidity($xml);
-  if ((not defined($res)) and (not defined($dom))) {
-    return (CHECK_FAILED, { CHECK_XML_VALIDITY, [$message, '']});
+  my ($res, $message, $dom);
+
+  foreach my $schema (#$saml2_metadata_schema,
+		      'schema/eduidmd.xsd') {
+      ($res, $message, $dom) = checkXMLValidity($xml, $schema);
+      if ((not defined($res)) and (not defined($dom))) {
+	  return (CHECK_FAILED, { CHECK_XML_VALIDITY, [$message, '']});
+      };
+      push @errors, (CHECK_XML_VALIDITY, $message) unless($res);
   };
-  push @errors, (CHECK_XML_VALIDITY, $message) unless($res);
 
   my $root = $dom->documentElement;
 
@@ -508,7 +570,8 @@ sub checkEntityDescriptor {
   my $v10 = 0;
   my $v11 = 0;
   my $v20 = 0;
-  ($res, $message, $IdP, $SP, $v10, $v11, $v20) = checkEntityID($root);
+  my $republishTargets = [];
+  ($res, $message, $IdP, $SP, $v10, $v11, $v20, $republishTargets) = checkEntityID($root);
   push @errors, (CHECK_ENTITYID, $message) unless($res);
 
   ($res, $message) = checkSAML($root, $IdP, 'urn:oasis:names:tc:SAML:2.0:protocol', 1);
@@ -530,8 +593,8 @@ sub checkEntityDescriptor {
   ($res, $message) = checkOrganizationEN($root, 1);
   push @errors, (CHECK_ORGANIZATION_EN, $message) unless($res);
 
-#  ($res, $message) = checkOrganizationCS($root, 1);
-#  push @errors, (CHECK_ORGANIZATION_CS, $message) unless($res);
+  ($res, $message) = checkOrganizationCS($root, 1);
+  push @errors, (CHECK_ORGANIZATION_CS, $message) unless($res);
 
   ($res, $message) = checkLocation($root);
   push @errors, (CHECK_ENDPOINTS, $message) unless($res);
@@ -546,6 +609,16 @@ sub checkEntityDescriptor {
 
   ($res, $message) = checkDiscoveryResponseBinding($root);
   push @errors, (CHECK_DISCOVERY_RESPONSE_BINDING, $message) unless($res);
+
+  if (defined($republishTargets) and (scalar(@{$republishTargets})>0)) {
+    # Spravce entity ji chce publikovat nekam dale. Je treba
+    # zkontrolovat specificke pozadavky toho nekam dale.
+    if (grep {$_ eq 'http://edugain.org/'} @{$republishTargets}) {
+      # Spravce chce entitu publikovat do edugainu takze je treba zkontrolovat mdui
+      ($res, $message) = checkUIInfo($root);
+      push @errors, (CHECK_UI_INFO, $message) unless($res);
+    };
+  };
 
   if (@errors) {
     my %errors = @errors;

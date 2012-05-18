@@ -4,6 +4,12 @@
   <rewriteURI uriStartString="http://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd" rewritePrefix="xmldsig-core-schema-fixed.xsd"/> 
   <rewriteURI uriStartString="http://www.w3.org/TR/2002/REC-xmlenc-core-20021210/xenc-schema.xsd" rewritePrefix="xenc-schema.xsd"/>
   <rewriteURI uriStartString="http://www.w3.org/2001/xml.xsd" rewritePrefix="xml.xsd"/>
+
+  <!--rewriteURI uriStartString="urn:oasis:names:tc:SAML:metadata:ui" rewritePrefix="sstc-saml-metadata-ui-v1.0.xsd"/-->
+  <!--delegateSystem systemIdStartString="urn:oasis:names:tc:SAML:metadata:ui" rewritePrefix="sstc-saml-metadata-ui-v1.0.xsd"/-->
+  <!--delegatePublic publicIdStartString="urn:oasis:names:tc:SAML:metadata:ui" rewritePrefix="sstc-saml-metadata-ui-v1.0.xsd"/-->
+
+<!--uri name="http://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-metadata-ui/v1.0/csprd02/xsd/sstc-saml-metadata-ui-v1.0.xsd" uri="./sstc-saml-metadata-ui-v1.0.xsd" /--> 
 <!--
   <nextCatalog catalog="/usr/share/xml/xmltooling/catalog.xml"/>
 -->

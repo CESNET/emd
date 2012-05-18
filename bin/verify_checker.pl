@@ -161,7 +161,38 @@ bla bla
 			 ['DiscoveryResponse is missing required Binding attribute.',
 			  '/md:EntityDescriptor/md:SPSSODescriptor/md:Extensions/idpdisc:DiscoveryResponse'],
 			},
-	      },
+	     },
+	     {
+	      file => 'tests/unknown-republish-target',
+	      errors => {
+			 emd2::Checker::CHECK_XML_VALIDITY =>
+			 ['Schemas validity error : Element \'{http://eduid.cz/schema/metadata/1.0}RepublishTarget\': [facet \'enumeration\'] The value \'nesmysl\' is not an element of the set {\'http://edugain.org/\'}.Schemas validity error : Element \'{http://eduid.cz/schema/metadata/1.0}RepublishTarget\': \'nesmysl\' is not a valid value of the atomic type \'{http://eduid.cz/schema/metadata/1.0}RepublishTargetType\'.', ''],
+			},
+	     },
+	     {
+	      file => 'tests/missing-uuinfo',
+	      errors => {
+			 emd2::Checker::CHECK_UI_INFO =>
+			 ['IDPSSODescriptor|SPSSODescriptor/Extensions/UIInfo is missing. Found \'/*/*[1]/*[1]\'.',
+			  '/*'],
+			},
+	     },
+	     {
+	      file => 'tests/uuinfo-displayname-no-en',
+	      errors => {
+			 emd2::Checker::CHECK_UI_INFO =>
+			 ['Element DisplayName must have lang=en version.',
+			  '/*/*[1]/*[1]/mdui:UIInfo'],
+			},
+	     },
+	     {
+	      file => 'tests/uuinfo-no-description',
+	      errors => {
+			 emd2::Checker::CHECK_UI_INFO =>
+			 ['UIInfo is missing required Description element.',
+			  '/*/*[1]/*[1]/mdui:UIInfo'],
+			},
+	     },
 	    );
 
 foreach my $test (@tests) {
