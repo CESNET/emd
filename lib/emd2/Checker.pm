@@ -257,6 +257,7 @@ sub checkSAML {
   } else {
     $SSODescriptor = $node->getElementsByTagNameNS($md_ns, 'SPSSODescriptor')->[0];
   };
+  return (undef, ["Document is missing SP/IDPSSODescriptor", $node->nodePath]) unless ($SSODescriptor);
 
   my @problems;
 
@@ -431,6 +432,8 @@ sub checkEntityID {
   my $SSODescriptor;
   $SSODescriptor = $IdP[0] if $IdP;
   $SSODescriptor = $SP[0] if $SP;
+
+  return (undef, ["Document is missing SP/IDPSSODescriptor", $node->nodePath]) unless ($SSODescriptor);
 
   my $v10 = 0;
      $v10 = 1 if ($SSODescriptor->getAttribute('protocolSupportEnumeration') =~ /urn:mace:shibboleth:1.0/);
