@@ -19,7 +19,7 @@ use vars qw($VERSION @ISA %EXPORT_TAGS);
 @ISA = qw(Exporter);
 $VERSION = "0.0.1";
 %EXPORT_TAGS = (
-                all => [qw(checkEntityDescriptor)],
+                all => [qw(checkEntityDescriptor checkXMLValidity)],
                 );
 # Add Everything in %EXPORT_TAGS to @EXPORT_OK
 Exporter::export_ok_tags('all');
@@ -54,7 +54,7 @@ sub checkXMLValidity {
   my $xml = shift;
   my $schema = shift;
 
-  return (undef, 'Empty String') if ((not defined($xml)) or ($xml eq ''));
+  return (undef, ['Empty String', '']) if ((not defined($xml)) or ($xml eq ''));
 
   # test jestli se XML da vubec naparsovat
   my $parser = XML::LibXML->new;
