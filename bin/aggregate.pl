@@ -11,6 +11,7 @@ use XML::Tidy;
 use Sys::Syslog qw(:standard :macros);
 use AppConfig qw(:expand);
 use emd2::Utils qw (logger local_die startRun stopRun);
+use emd2::Checker qw (checkXMLValidity);
 use utf8;
 
 my $config = AppConfig->new
@@ -184,24 +185,25 @@ sub eduGAIN_entity {
   my $entity = shift;
 
   # Najit Extensions
-#  my @ext = $entity->getElementsByTagNameNS($saml20_ns, 'Extensions');
-#  my $ext;
-#  unless (@ext) {
-#    # Nepovedlo se najit Extensions - takovahle entita by se vubec
-#    # nemela dostat do skladu, kontroluje se to pri vkladani.
-#
-#    # TODO: Vytvorit
-#  } else {
-#    $ext = $ext[0];
-#  };
+  my @ext = $entity->getChildrenByTagNameNS($saml20_ns, 'Extensions');
+  my $ext;
+  unless (@ext) {
+    # Nepovedlo se najit Extensions - takovahle entita by se vubec
+    # nemela dostat do skladu, kontroluje se to pri vkladani.
 
-  my $ext = new XML::LibXML::Element('Extensions');
-  $entity->insertBefore($ext, $entity->firstChild);
+    $ext = new XML::LibXML::Element('Extensions');
+    $entity->insertBefore($ext, $entity->firstChild);
+  } else {
+    # Povedlo se a tak berem tu prvni. Puvodne se pracovalo s
+    # getElementsByTagNameNS ktere hleda bez ohledu na hirerchaii.
+    $ext = $ext[0];
+  };
 
   # <mdrpi:RegistrationInfo xmlns:mdrpi="urn:oasis:names:tc:SAML:metadata:rpi" registrationAuthority="http://www.eduid.cz/">
   #   <mdrpi:RegistrationPolicy xml:lang="en">http://www.eduid.cz/wiki/_media/en/eduid/policy/policy_eduid_en-1_1.pdf</mdrpi:RegistrationPolicy>
   #   <mdrpi:RegistrationPolicy xml:lang="cs">http://www.eduid.cz/wiki/_media/eduid/policy/policy_eduid_cz-1_1-3.pdf</mdrpi:RegistrationPolicy>
   # </mdrpi:RegistrationInfo>
+
   my $ri = new XML::LibXML::Element('mdrpi:RegistrationInfo');
   $ri->setAttribute('registrationAuthority', 'http://www.eduid.cz/');
   $ext->addChild($ri);
@@ -286,27 +288,35 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
       my $tidy = XML::Tidy->new('xml' => $doc->toString);
       $tidy->tidy();
 
-      open(F, ">$f") or local_die "Cant write to $f: $!";
-      binmode F, ":utf8";
-      #$doc->toFH(\*F);
-      #print F $doc->toString;
-      print F $tidy->toString;
-      close(F);
+      my $tidy_string = $tidy->toString;
+      my ($res, $msg, $dom) = checkXMLValidity($tidy_string, 'schema/eduidmd.xsd');
 
-      if (defined($config->sign_cmd)) {
-	my $cmd = sprintf($config->sign_cmd, $f, $config->output_dir.'/'.$key);
-	logger(LOG_DEBUG,  "Signing: '$cmd'");
-	my $cmd_fh;
-	open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
-	my @cmd_out = <CMD>;
-	close(CMD);
-	my $ret = $? >> 8;
-	if ($ret > 0) {
-	  logger(LOG_ERR,  "Command $cmd terminated with error_code=$ret. Output:");
-	  foreach my $line (@cmd_out) {
-	    logger(LOG_ERR, $line);
-	  };	
+      if ($res) {
+	logger(LOG_DEBUG, "Newly created XML document is valid with schema.");
+
+	open(F, ">$f") or local_die "Cant write to $f: $!";
+	binmode F, ":utf8";
+	print F $tidy_string;
+	close(F);
+
+	if (defined($config->sign_cmd)) {
+	  my $cmd = sprintf($config->sign_cmd, $f, $config->output_dir.'/'.$key);
+	  logger(LOG_DEBUG,  "Signing: '$cmd'");
+	  my $cmd_fh;
+	  open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
+	  my @cmd_out = <CMD>;
+	  close(CMD);
+	  my $ret = $? >> 8;
+	  if ($ret > 0) {
+	    logger(LOG_ERR,  "Command $cmd terminated with error_code=$ret. Output:");
+	    foreach my $line (@cmd_out) {
+	      logger(LOG_ERR, $line);
+	    };
+	  };
 	};
+      } else {
+	logger(LOG_ERR, "Newly created XML document is invalid: ".$msg->[0]);
+	exit 1;
       };
     };
   };
