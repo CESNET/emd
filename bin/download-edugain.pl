@@ -12,6 +12,7 @@ use LWP::UserAgent;
 use Date::Manip;
 use Date::Format;
 use File::Temp qw(tempfile);
+use utf8;
 
 sub load_ignore_list {
   my $file = shift;
@@ -104,7 +105,9 @@ if ($response->is_success) {
     # nasleduje validace podpisu u souboru na disku... opetovne cteni je
     # docela hloupe, ale mozna lepsi nez validovat neco na disku a pak
     # pracovat s necim jinym v pameti.
-    if (store_to_file($config->metadata_file, $response->content)==0) {
+    my $metadata = $response->content;
+    utf8::decode($metadata);
+    if (store_to_file($config->metadata_file, $metadata)==0) {
       logger(LOG_INFO, sprintf('Nothing new. Terminating.'));
       exit 0;
     };
@@ -125,6 +128,7 @@ open(F, '<'.$config->metadata_file) or do {
 			  $config->metadata_file, $!));
   exit 1;
 };
+binmode F, ":utf8";
 my $str = join('', <F>);
 close(F);
 

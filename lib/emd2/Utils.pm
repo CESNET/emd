@@ -172,6 +172,8 @@ sub store_to_file {
     $res = 2;
   };
 
+  utf8::decode($content);
+
   my ($tmp_fh, $tmp_filename) = tempfile("/tmp/emd-utils`-XXXXXX");
   binmode $tmp_fh, ":utf8";
   print $tmp_fh $content;
