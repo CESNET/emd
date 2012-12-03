@@ -10,7 +10,7 @@
   <!--delegatePublic publicIdStartString="urn:oasis:names:tc:SAML:metadata:ui" rewritePrefix="sstc-saml-metadata-ui-v1.0.xsd"/-->
 
 <!--uri name="http://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-metadata-ui/v1.0/csprd02/xsd/sstc-saml-metadata-ui-v1.0.xsd" uri="./sstc-saml-metadata-ui-v1.0.xsd" /--> 
-<!--
-  <nextCatalog catalog="/usr/share/xml/xmltooling/catalog.xml"/>
--->
+
+  <nextCatalog catalog="/usr/share/xml/opensaml/saml20-catalog.xml"/>
+
 </catalog>

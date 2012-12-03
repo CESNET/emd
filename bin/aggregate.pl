@@ -52,6 +52,7 @@ sub tidyEntityDescriptor {
   my $node = shift;
 
   $node->removeAttributeNS($saml20_ns, 'validUntil');
+  $node->removeAttribute('ID');
 
   return $node;
 };
@@ -289,7 +290,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
       $tidy->tidy();
 
       my $tidy_string = $tidy->toString;
-      my ($res, $msg, $dom) = checkXMLValidity($tidy_string, 'schema/eduidmd.xsd');
+      my ($res, $msg, $dom) = checkXMLValidity($tidy_string, 'emd2/schema/eduidmd.xsd');
 
       if ($res) {
 	logger(LOG_DEBUG, "Newly created XML document is valid with schema.");
