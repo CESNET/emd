@@ -300,7 +300,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     my ($entities, $mtime) = filter($md, [split(/\+/, $key)], \@or_tags);
 
     my $pref = '';
-    $pref = $fed_id.'-' if ($config->varlist('^'.$or_tags_name.'$'));
+    $pref = $fed_id.'+' if ($config->varlist('^'.$or_tags_name.'$'));
     my $f = $config->output_dir."/$pref$key-unsigned";
     my $export = 1;
 
