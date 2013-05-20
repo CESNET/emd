@@ -131,18 +131,38 @@ sub load {
 sub filter {
   my $md = shift;
   my $filter = shift;
+  my $or_filter = shift;
 
   my $f = join('+', sort @{$filter});
 
+  # or filter umoznuje rikat ze chceme entity s tagem hostel a soucasne z federace eduid
+  my %or_md;
+  if (@{$or_filter}) {
+    foreach my $entityID (keys %{$md}) {
+      my $or_found = 0;
+      foreach my $tag (@{$or_filter}) {
+	$or_found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
+      };
+
+      if ($or_found) {
+	$or_md{$entityID} = $md->{$entityID};
+      };
+    };
+    $md = \%or_md;
+  };
+
+  # normalni filter rika ze chceme entity s tagem eduid a idp
   my %md;
   my $mtime = 0;
   foreach my $entityID (keys %{$md}) {
     my $found = 0;
+    my $or_found = 0;
     foreach my $tag (@{$filter}) {
       $found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
+      $or_found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
     };
 
-    #logger(LOG_DEBUG, "filter=$f; entityID=$entityID; found=$found\n");
+    #logger(LOG_DEBUG, "filter=$f; or_filter=$or_f; entityID=$entityID; found=$found; or_found=$or_found\n");
 
     if ($found == @{$filter}) {
       $md{$entityID} = $md->{$entityID};
@@ -266,9 +286,22 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
   my $fed_name = $fed_id.'_name';
 
   foreach my $key (split(/ *, */, $config->$fed_filters)) {
-    my ($entities, $mtime) = filter($md, [split(/\+/, $key)]);
 
-    my $f = $config->output_dir."/$key-unsigned";
+    my @or_tags;
+    my $or_tags_name = $fed_id.'_or_tags';
+    # Konstrukce $config->varlist('^'.$or_tags_name.'$') je vypis
+    # vsech promenych ktery odpovidaji uvedenemu regularnimu
+    # vyrazu. Tedy je to metoda jak zjistit jestli nejaka promena je
+    # nebo neni definovana. Kdyz se pouzije nedefinovana promena tak
+    # AppConfig vypisuje chyby.
+    if ($config->varlist('^'.$or_tags_name.'$')) {
+      @or_tags = (split(/ *, */, $config->$or_tags_name));
+    };
+    my ($entities, $mtime) = filter($md, [split(/\+/, $key)], \@or_tags);
+
+    my $pref = '';
+    $pref = $fed_id.'-' if ($config->varlist('^'.$or_tags_name.'$'));
+    my $f = $config->output_dir."/$pref$key-unsigned";
     my $export = 1;
 
     if (-f $f) {
@@ -301,7 +334,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 	close(F);
 
 	if (defined($config->sign_cmd)) {
-	  my $cmd = sprintf($config->sign_cmd, $f, $config->output_dir.'/'.$key);
+	  my $cmd = sprintf($config->sign_cmd, $f, $config->output_dir.'/'.$pref.$key);
 	  logger(LOG_DEBUG,  "Signing: '$cmd'");
 	  my $cmd_fh;
 	  open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
