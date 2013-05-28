@@ -286,6 +286,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
   my $fed_name = $fed_id.'_name';
 
   foreach my $key (split(/ *, */, $config->$fed_filters)) {
+    $key =~ s/\'//g;
 
     my @or_tags;
     my $or_tags_name = $fed_id.'_or_tags';
@@ -301,6 +302,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 
     my $pref = '';
     $pref = $fed_id.'+' if ($config->varlist('^'.$or_tags_name.'$'));
+    $pref =~ s/\+$// if ($key eq ''); # smazat koncove plus ktere se tam objevi kdyz je key='';
     my $f = $config->output_dir."/$pref$key-unsigned";
     my $export = 1;
 
