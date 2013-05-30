@@ -18,6 +18,7 @@ my $config = AppConfig->new
    svn_data_dir          => { DEFAULT => undef },
    svn_repository        => { DEFAULT => undef },
    svn_module            => { DEFAULT => 'metadata' },
+   svn_revision_file     => { DEFAULT => 'metadata' },
    aggregate             => { DEFAULT => undef },
    aggregate_cmd         => { DEFAULT => undef },
  );
@@ -58,6 +59,12 @@ if ($repository ne $local) {
     foreach my $line (@out) { logger(LOG_ERR, $line); };	
   } else {
     logger(LOG_DEBUG,  "Local repository successfully updated.");
+
+    # Zaznamenat posledni verzi SVN
+    open(REV, ">".$config->svn_revision_file);
+    print REV $local;
+    close(REV);
+
     foreach my $line (@out) { logger(LOG_ERR, $line); };	
     if ($config->aggregate) {
       my $cmd = $config->aggregate_cmd;
