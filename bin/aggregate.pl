@@ -50,9 +50,25 @@ my $SP_tag = 'sp';
 
 sub tidyEntityDescriptor {
   my $node = shift;
+  my $entityID = $node->getAttribute('entityID');
+
+  # Semik: 24.7.2013 - je mozny ze tohle nikdy nechodilo pridal jsem
+  # odstranovani i bez jmeneho prostoru a zacalo to odstranovat
+  # validUntil u https://secure.palgrave-journals.com/shibboleth
 
   $node->removeAttributeNS($saml20_ns, 'validUntil');
+  $node->removeAttribute('validUntil');
+
+  $node->removeAttributeNS($saml20_ns, 'ID');
   $node->removeAttribute('ID');
+
+  # Odstraneni podpisu na metadatech entit - do 24.7.2013 se to muselo
+  # odstranovat manualne. Nemam 100% potvrzeny ze by to byvalo bylo
+  # zpusobilo potize. Ale Honza Ch. mel trable po pridani IdP
+  # nature.com u nichz nedoslo k odstraneni validUntil a prave podpisu.
+  foreach my $element ($node->getElementsByTagNameNS($ds_ns, 'Signature')) {
+    $node->removeChild($element);
+  };
 
   return $node;
 };
