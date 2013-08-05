@@ -29,6 +29,7 @@ use constant CHECK_FAILED => 1;
 use constant CHECK_XML_VALIDITY => 2;
 use constant CHECK_ENTITYID => 3;
 use constant CHECK_TECHNICAL_CONTACT => 4;
+use constant CHECK_ORGANIZATION => 15;
 use constant CHECK_ORGANIZATION_EN => 5;
 use constant CHECK_ORGANIZATION_CS => 6;
 use constant CHECK_ENDPOINTS => 7;
@@ -64,7 +65,7 @@ sub checkXMLValidity {
   };
 
   if ($@) {
-    return (undef, $@);
+    return (undef, ["$@", '']);
   };
 
   # test validity vuci schematu
@@ -109,6 +110,30 @@ sub checkTechnicalContact {
   return (undef, ['Technical contact is missing.', $dom->nodePath]);
 };
 
+sub checkOrganization {
+  my $node = shift;
+  my $elements = shift;
+
+  my @org = ($node->getElementsByTagNameNS($md_ns, 'Organization'));
+  my $num_org = scalar @org;
+
+  if ($num_org==1) {
+    my @missing;
+    my $org = $org[0];
+
+    if ($org->parentNode->nodeName !~ /EntityDescriptor/) {
+      return(undef, ['Organization element must be child of EntityDescriptor.', $org->nodePath]);
+    };
+  } elsif ($num_org==0) {
+    return(undef, ['Missing Organization element.', $node->nodePath]);
+  } else {
+    return(undef, ['Found multiple Organization elements. There must be exactly one.',
+		  $org[0]->parentNode->nodePath]);
+  };
+
+  return 1;
+};
+
 sub _checkOrganization {
   my $node = shift;
   my $elements = shift;
@@ -120,6 +145,7 @@ sub _checkOrganization {
   if ($num_org==1) {
     my @missing;
     my $org = $org[0];
+
     foreach my $oe (@{$elements}) {
       my $found_lang = 0;
       my @oe = ($org->getElementsByTagNameNS($md_ns, $oe));
@@ -134,13 +160,9 @@ sub _checkOrganization {
       return(undef, [$msg, $org->nodePath]);
     };
 
-    return 1;
-  } elsif ($num_org==0) {
-    return(undef, ['Missing Organization element.', $node->nodePath]);
-  } else {
-    return(undef, ['Found multiple Organization elements. There must be exactly one.',
-		  $org[0]->parentNode->nodePath]);
   };
+
+  return 1;
 };
 
 sub checkOrganizationEN {
@@ -212,11 +234,11 @@ my $samlRules =
 	  'NameIDFormat' => ['urn:mace:shibboleth:1.0:nameIdentifier'],
 	  'SingleSignOnService' => ['urn:mace:shibboleth:1.0:profiles:AuthnRequest'],
 	 },
-      'urn:oasis:names:tc:SAML:1.1:protocol' =>
-         {
-	  'NameIDFormat' => ['urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified'],
-	  'SingleSignOnService' => ['urn:mace:shibboleth:1.0:profiles:AuthnRequest'],
-	 },
+       'urn:oasis:names:tc:SAML:1.1:protocol' =>
+          {
+ 	  'NameIDFormat' => ['urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified'],
+ 	  'SingleSignOnService' => ['urn:mace:shibboleth:1.0:profiles:AuthnRequest'],
+ 	 },
       'urn:oasis:names:tc:SAML:2.0:protocol' =>
          {
 	  'NameIDFormat' => ['urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
@@ -231,11 +253,11 @@ my $samlRules =
 	  'NameIDFormat' => ['urn:mace:shibboleth:1.0:nameIdentifier'],
 	  'AssertionConsumerService' => ['urn:mace:shibboleth:1.0:profiles:AuthnRequest'],
 	 },
-      'urn:oasis:names:tc:SAML:1.1:protocol' =>
-         {
-	  'NameIDFormat' => ['urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified'],
-	  'AssertionConsumerService' => ['urn:mace:shibboleth:1.0:profiles:AuthnRequest'],
-	 },
+       'urn:oasis:names:tc:SAML:1.1:protocol' =>
+          {
+ 	  'NameIDFormat' => ['urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified'],
+ 	  'AssertionConsumerService' => ['urn:mace:shibboleth:1.0:profiles:AuthnRequest'],
+ 	 },
       'urn:oasis:names:tc:SAML:2.0:protocol' =>
          {
 	  'NameIDFormat' => ['urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
@@ -558,12 +580,16 @@ sub checkEntityDescriptor {
   my ($res, $message, $dom);
 
   foreach my $schema (#$saml2_metadata_schema,
-		      'schema/eduidmd.xsd') {
-      ($res, $message, $dom) = checkXMLValidity($xml, $schema);
-      if ((not defined($res)) and (not defined($dom))) {
-	  return (CHECK_FAILED, { CHECK_XML_VALIDITY, [$message, '']});
-      };
-      push @errors, (CHECK_XML_VALIDITY, $message) unless($res);
+		      '/home/semik/proj/emd2/schema/eduidmd.xsd') {
+    ($res, $message, $dom) = checkXMLValidity($xml, $schema);
+    if ((not defined($res)) and (not defined($dom))) {
+      my @h;
+      push @h, CHECK_XML_VALIDITY, $message;
+      my %h = @h;
+
+      return (CHECK_FAILED, \%h);
+    };
+    push @errors, (CHECK_XML_VALIDITY, $message) unless($res);
   };
 
   my $root = $dom->documentElement;
@@ -582,7 +608,8 @@ sub checkEntityDescriptor {
 
   if ($v11) {
     ($res, $message) = checkSAML($root, $IdP, 'urn:oasis:names:tc:SAML:1.1:protocol', 1);
-    push @errors, (CHECK_SAML11, $message) unless($res);
+    # SEMIK 10.2.2013 nejsem si jistej proc bychom na tomhle meli trvat
+    #push @errors, (CHECK_SAML11, $message) unless($res);
   };
 
   if ($v10) {
@@ -592,6 +619,9 @@ sub checkEntityDescriptor {
 
   ($res, $message) = checkTechnicalContact($root);
   push @errors, (CHECK_TECHNICAL_CONTACT, $message) unless($res);
+
+  ($res, $message) = checkOrganization($root, 1);
+  push @errors, (CHECK_ORGANIZATION, $message) unless($res);
 
   ($res, $message) = checkOrganizationEN($root, 1);
   push @errors, (CHECK_ORGANIZATION_EN, $message) unless($res);
@@ -605,21 +635,32 @@ sub checkEntityDescriptor {
   ($res, $message) = checkX509Certificate($root);
   push @errors, (CHECK_X509CERTIFICATE, $message) unless($res);
 
+  my $ui_info_checked = 0;
   if ($IdP) {
     ($res, $message) = checkExtensionsScope($root);
     push @errors, (CHECK_EXTENSIONS_SCOPE, $message) unless($res);
+    $ui_info_checked = 1;
+
+    ($res, $message) = checkUIInfo($root);
+    push @errors, (CHECK_UI_INFO, $message) unless($res);
+    $ui_info_checked = 1;
   };
 
   ($res, $message) = checkDiscoveryResponseBinding($root);
   push @errors, (CHECK_DISCOVERY_RESPONSE_BINDING, $message) unless($res);
 
+
   if (defined($republishTargets) and (scalar(@{$republishTargets})>0)) {
     # Spravce entity ji chce publikovat nekam dale. Je treba
     # zkontrolovat specificke pozadavky toho nekam dale.
     if (grep {$_ eq 'http://edugain.org/'} @{$republishTargets}) {
-      # Spravce chce entitu publikovat do edugainu takze je treba zkontrolovat mdui
-      ($res, $message) = checkUIInfo($root);
-      push @errors, (CHECK_UI_INFO, $message) unless($res);
+      unless ($ui_info_checked) {
+	# Spravce chce entitu publikovat do edugainu takze je treba zkontrolovat mdui
+	# Semik: 5.8.2013 - MDUI je povinne pro vsechny IdP proto tahle vyjimka
+	($res, $message) = checkUIInfo($root);
+	push @errors, (CHECK_UI_INFO, $message) unless($res);
+	$ui_info_checked = 1;
+      };
     };
   };
 
