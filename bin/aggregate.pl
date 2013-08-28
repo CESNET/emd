@@ -68,6 +68,21 @@ sub tidyEntityDescriptor {
   # nature.com u nichz nedoslo k odstraneni validUntil a prave podpisu.
   foreach my $element ($node->getElementsByTagNameNS($ds_ns, 'Signature')) {
     $node->removeChild($element);
+    logger(LOG_INFO, "Removed ".$element->nodeName." from metadata of $entityID.");
+  };
+
+  # Semik: 28. 8. 2013 - Po problemech s nature.com (OpenAthens SP
+  # 2.0) jsem se rozhodl vyhazovat element X509SerialNumber aby byla
+  # metadata validni tak je nezbytne vyhodit nadrazeny
+  # X509IssuerSerial. Problem jsem konzultoval v listu eduGAIN-discuss
+  # kde se ozval Ian Young s tim ze uz pekne dlouho v UK federaci
+  # tenhle element odstranuji prave kvuli temto potizim.
+  foreach my $element (
+		       #$node->getElementsByTagNameNS($ds_ns, 'X509SubjectName'),
+		       $node->getElementsByTagNameNS($ds_ns, 'X509IssuerSerial'),
+		      ) {
+    $element->unbindNode;
+    logger(LOG_INFO, "Removed ".$element->nodeName." from metadata of $entityID.");
   };
 
   return $node;
