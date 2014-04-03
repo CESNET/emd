@@ -37,6 +37,8 @@ my $config = AppConfig->new
   );
 
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
+my $saml20attr_ns = 'urn:oasis:names:tc:SAML:metadata:attribute';
+my $saml20asrt_ns = 'urn:oasis:names:tc:SAML:2.0:assertion';
 my $xsi_ns = 'http://www.w3.org/2001/XMLSchema-instance';
 my $ds_ns = 'http://www.w3.org/2000/09/xmldsig#';
 my $mdrpi_ns = 'urn:oasis:names:tc:SAML:metadata:rpi';
@@ -83,6 +85,14 @@ sub tidyEntityDescriptor {
 		      ) {
     $element->unbindNode;
     logger(LOG_INFO, "Removed ".$element->nodeName." from metadata of $entityID.");
+  };
+
+  # Semik: 3. 4. 2014 - odstraneni skupiny SP clarin - tohle ridime pomoci clarin_sp.tag
+  foreach my $element ($node->getElementsByTagNameNS($saml20asrt_ns, 'AttributeValue')) {
+      if($element->textContent =~ m,http://eduid.cz/uri/sp-group/clarin,) {
+	  $element->parentNode->unbindNode;
+	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      };
   };
 
   return $node;
@@ -271,6 +281,61 @@ sub eduGAIN_entity {
   $ri->addChild($rp_cs);
 };
 
+sub clarin_sp_entity {
+  my $entity = shift;
+
+  ## Najit SPSSODescriptor
+  #my @SPSSO = $entity->getChildrenByTagNameNS($saml20_ns, 'SPSSODescriptor');
+  #my $SPSSO = $SPSSO[0];
+
+  # Najit ci vytvorit Extensions
+  my @ext = $entity->getChildrenByTagNameNS($saml20_ns, 'Extensions');
+  my $ext;
+  unless (@ext) {
+    # Nepovedlo se najit Extensions - takovahle entita by se vubec
+    # nemela dostat do skladu, kontroluje se to pri vkladani.
+
+    $ext = new XML::LibXML::Element('Extensions');
+    $entity->insertBefore($ext, $entity->firstChild);
+  } else {
+    # Povedlo se a tak berem tu prvni. Puvodne se pracovalo s
+    # getElementsByTagNameNS ktere hleda bez ohledu na hirerchaii.
+    $ext = $ext[0];
+  };
+
+  #<EntityAttributes xmlns="urn:oasis:names:tc:SAML:metadata:attribute">
+  #    <Attribute xmlns="urn:oasis:names:tc:SAML:2.0:assertion" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" Name="http://macedir.org/entity-category">
+  #        <AttributeValue>http://eduid.cz/uri/sp-group/clarin</AttributeValue>
+  #    </Attribute>
+  #</EntityAttributes>
+
+  # najit ci vytvorit vlozit EntityAttribute
+  my @ea = $ext->getChildrenByTagNameNS($saml20attr_ns, 'EntityAttributes');
+  my $ea;
+  unless (@ea) {
+      $ea = new XML::LibXML::Element('mdattr:EntityAttributes');
+      $ext->addChild($ea);
+  } else {
+      $ea = $ea[0];
+  };
+
+  # najit ci vlozit Attribute
+  my @a = $ea->getChildrenByTagNameNS($saml20attr_ns, 'Attribute');
+  my $a;
+  unless (@a) {
+      $a = new XML::LibXML::Element('mdasrt:Attribute');
+      $a->setAttribute('NameFormat', 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri');
+      $a->setAttribute('Name', 'http://macedir.org/entity-category');
+      $ea->addChild($a);
+  } else {
+      $a = $a[0];
+  };
+
+  my $av = new XML::LibXML::Element('mdasrt:AttributeValue');
+  $av->appendText('http://eduid.cz/uri/sp-group/clarin');
+  $a->addChild($av);
+};
+
 sub aggregate {
   my $md = shift;
   my $name = shift;
@@ -284,6 +349,9 @@ sub aggregate {
   $root->setNamespace($saml20_ns);
   $root->setNamespace($xsi_ns, 'xsi', 0);
   $root->setNamespace($ds_ns, 'ds', 0);
+  $root->setNamespace($saml20attr_ns, 'mdattr', 0);
+  $root->setNamespace($saml20asrt_ns, 'mdasrt', 0);
+
 
   $root->setAttribute('Name', $name);
   $root->setAttribute('validUntil', $validUntil);
@@ -293,6 +361,7 @@ sub aggregate {
 
   foreach my $entityID (keys %{$md}) {
     my $entity = $md->{$entityID}->{md}->cloneNode(1);
+    clarin_sp_entity($entity) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
     eduGAIN_entity($entity) if ($name eq 'eduid.cz-edugain');
     $dom->adoptNode($entity);
     $root->addChild($entity);
