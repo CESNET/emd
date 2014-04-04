@@ -254,6 +254,7 @@ sub eduGAIN_entity {
     # nemela dostat do skladu, kontroluje se to pri vkladani.
 
     $ext = new XML::LibXML::Element('Extensions');
+    $ext->setNamespace($saml20_ns, 'md', 1);
     $entity->insertBefore($ext, $entity->firstChild);
   } else {
     # Povedlo se a tak berem tu prvni. Puvodne se pracovalo s
@@ -296,6 +297,7 @@ sub clarin_sp_entity {
     # nemela dostat do skladu, kontroluje se to pri vkladani.
 
     $ext = new XML::LibXML::Element('Extensions');
+    $ext->setNamespace($saml20_ns, 'md', 1);
     $entity->insertBefore($ext, $entity->firstChild);
   } else {
     # Povedlo se a tak berem tu prvni. Puvodne se pracovalo s
@@ -361,8 +363,8 @@ sub aggregate {
 
   foreach my $entityID (keys %{$md}) {
     my $entity = $md->{$entityID}->{md}->cloneNode(1);
-    clarin_sp_entity($entity) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
     eduGAIN_entity($entity) if ($name eq 'eduid.cz-edugain');
+    clarin_sp_entity($entity) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
     $dom->adoptNode($entity);
     $root->addChild($entity);
   };
