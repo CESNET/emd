@@ -451,7 +451,14 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 	  };
 	};
       } else {
-	logger(LOG_ERR, "Newly created XML document is invalid: ".$msg->[0]);
+	my $f = "/tmp/$pref$key-xml-invalid";
+	open(F, ">$f") or local_die "Cant write to $f: $!";
+	binmode F, ":utf8";
+	print F $tidy_string;
+	close(F);
+
+	logger(LOG_ERR, "Newly created XML document is invalid: ".$msg->[0]." Stored as $f.");
+
 	exit 1;
       };
     };
