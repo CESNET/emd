@@ -45,6 +45,9 @@ my $mdrpi_ns = 'urn:oasis:names:tc:SAML:metadata:rpi';
 my $mdui_ns = 'urn:oasis:names:tc:SAML:metadata:ui';
 my $mdeduid_ns = 'http://eduid.cz/schema/metadata/1.0';
 
+my $clarin_tag = 'http://eduid.cz/uri/sp-group/clarin';
+my $libraries_tag = 'http://eduid.cz/uri/idp-group/libraries';
+
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
 
 my $IdP_tag = 'idp';
@@ -89,7 +92,11 @@ sub tidyEntityDescriptor {
 
   # Semik: 3. 4. 2014 - odstraneni skupiny SP clarin - tohle ridime pomoci clarin_sp.tag
   foreach my $element ($node->getElementsByTagNameNS($saml20asrt_ns, 'AttributeValue')) {
-      if($element->textContent =~ m,http://eduid.cz/uri/sp-group/clarin,) {
+      if($element->textContent =~ m,$clarin_tag,) {
+	  $element->parentNode->unbindNode;
+	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      };
+      if($element->textContent =~ m,$libraries_tag,) {
 	  $element->parentNode->unbindNode;
 	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
       };
@@ -282,8 +289,9 @@ sub eduGAIN_entity {
   $ri->addChild($rp_cs);
 };
 
-sub clarin_sp_entity {
+sub tag_entity {
   my $entity = shift;
+  my $tag_uri = shift;
 
   ## Najit SPSSODescriptor
   #my @SPSSO = $entity->getChildrenByTagNameNS($saml20_ns, 'SPSSODescriptor');
@@ -334,7 +342,7 @@ sub clarin_sp_entity {
   };
 
   my $av = new XML::LibXML::Element('mdasrt:AttributeValue');
-  $av->appendText('http://eduid.cz/uri/sp-group/clarin');
+  $av->appendText($tag_uri);
   $a->addChild($av);
 };
 
@@ -364,7 +372,8 @@ sub aggregate {
   foreach my $entityID (keys %{$md}) {
     my $entity = $md->{$entityID}->{md}->cloneNode(1);
     eduGAIN_entity($entity) if ($name eq 'eduid.cz-edugain');
-    clarin_sp_entity($entity) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $clarin_tag) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $libraries_tag) if (grep {$_ eq 'libraries'} @{$md->{$entityID}->{tags}});
     $dom->adoptNode($entity);
     $root->addChild($entity);
   };
