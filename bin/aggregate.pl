@@ -388,7 +388,7 @@ $config->file($config->cfg) or
 
 startRun($config->cfg);
 
-my $validUntil = UnixDate(ParseDate('30 days'), '%Y-%m-%dT%H:%M:%SZ');
+my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
 
 my $md = load($config->metadata_dir);
 
