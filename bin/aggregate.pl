@@ -46,7 +46,7 @@ my $mdui_ns = 'urn:oasis:names:tc:SAML:metadata:ui';
 my $mdeduid_ns = 'http://eduid.cz/schema/metadata/1.0';
 
 my $clarin_tag = 'http://eduid.cz/uri/sp-group/clarin';
-my $mefanet_tag = 'http://eduid.cz/uri/sp-group/mefanet';
+my $mefanet_tag = 'http://eduid.cz/uri/group/mefanet';
 my $libraries_tag = 'http://eduid.cz/uri/idp-group/library';
 
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
