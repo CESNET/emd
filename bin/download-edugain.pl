@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use lib qw(emd2/lib);
+use lib qw(emd2/lib lib);
 use Data::Dumper;
 use AppConfig qw(:expand);
 use XML::LibXML;
@@ -33,12 +33,18 @@ sub verify_signature {
   my $content = shift;
   my $signing_cert = shift;
 
+  my $parser = XML::LibXML->new;
+  my $doc = $parser->parse_string($content);
+  my $signature = $doc->getElementsByTagNameNS('http://www.w3.org/2000/09/xmldsig#', 'Signature')->[0];
+  my $keyInfo = $signature->getElementsByTagNameNS('http://www.w3.org/2000/09/xmldsig#', 'KeyInfo')->[0];
+  $keyInfo->unbindNode;
+
   my ($fh, $filename) = tempfile('/tmp/edugain-XXXXXX');
-  print $fh $content;
+  print $fh $doc->toString;
   close ($fh);
 
   my ($fh_xmlsec1, $xmlsec1) = tempfile('/tmp/xmllsec-XXXXXX');
-  `/usr/bin/xmlsec1 --verify --trusted-pem $signing_cert --id-attr:ID urn:oasis:names:tc:SAML:2.0:metadata:EntitiesDescriptor $filename >$xmlsec1 2>&1`;
+  `/usr/bin/xmlsec1 --verify --pubkey-pem $signing_cert --id-attr:ID urn:oasis:names:tc:SAML:2.0:metadata:EntitiesDescriptor $filename >$xmlsec1 2>&1`;
   my $err = $? >> 8;
 
   unless ($err) {
