@@ -376,6 +376,7 @@ sub aggregate {
   my $name = shift;
   my $validUntil = shift;
   my $ID = shift || 'undefined';
+  $ID =~ s/[^a-zA-Z0-0]/_/g;
 
   my $dom = XML::LibXML::Document->createDocument('1.0', 'utf-8');
   my $root = XML::LibXML::Element->new('EntitiesDescriptor');
