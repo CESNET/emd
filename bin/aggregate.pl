@@ -23,6 +23,8 @@ my $config = AppConfig->new
 
    cfg           => { DEFAULT => '' },
 
+   svn_config_dir        => { DEFAULT => undef },
+
    metadata_dir  => { DEFAULT => '' },
    output_dir    => { DEFAULT => '' },
 
@@ -33,7 +35,7 @@ my $config = AppConfig->new
    force         => { DEFAULT => undef },
 
    max_age       => { DEFAULT => 12*60*60 }, # sekundy
-   validity      => { DEFAULT => '30 days'}, # cokoliv dokaze ParseDate
+   validity      => { DEFAULT => '25 days'}, # cokoliv dokaze ParseDate
   );
 
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
@@ -110,6 +112,20 @@ sub tidyEntityDescriptor {
   return $node;
 };
 
+sub load_registrationInstant {
+    my $dir = shift;
+    my $md = shift;
+
+    open(F, "<$dir/eduid.registration") or return;
+    while (my $line = <F>) {
+	chomp($line);
+	if ($line =~ /(\S+)\s+(.*)/) {
+	    $md->{$1}->{registrationInstant} = $2;
+	};
+    };
+    close(F);
+};
+
 sub load {
   my $dir = shift;
   my %md;
@@ -137,9 +153,11 @@ sub load {
     my $root = $xml->documentElement;
     my $entityID = $root->getAttribute('entityID');
     $md{$entityID}->{md} = tidyEntityDescriptor($root);
-    my @stat = stat("$dir/$file");
 
+    my @stat = stat("$dir/$file");
     $md{$entityID}->{mtime} = $stat[9];
+    $md{$entityID}->{registrationInstant} = UnixDate(ParseDate('epoch '.$stat[9]), '%Y-%m-%dT%H:%M:%SZ');
+
     if ($root->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor')) {
       push @{$md{$entityID}->{tags}}, $IdP_tag;
     } elsif ($root->getElementsByTagNameNS($saml20_ns, 'SPSSODescriptor')) {
@@ -257,6 +275,7 @@ sub eduGAIN_root {
 
 sub eduGAIN_entity {
   my $entity = shift;
+  my $registrationInstant = shift;
 
   # Najit Extensions
   my @ext = $entity->getChildrenByTagNameNS($saml20_ns, 'Extensions');
@@ -281,6 +300,7 @@ sub eduGAIN_entity {
 
   my $ri = new XML::LibXML::Element('mdrpi:RegistrationInfo');
   $ri->setAttribute('registrationAuthority', 'http://www.eduid.cz/');
+  $ri->setAttribute('registrationInstant', $registrationInstant);
   $ext->addChild($ri);
 
   my $rp_en = new XML::LibXML::Element('mdrpi:RegistrationPolicy');
@@ -355,6 +375,7 @@ sub aggregate {
   my $md = shift;
   my $name = shift;
   my $validUntil = shift;
+  my $ID = shift || 'undefined';
 
   my $dom = XML::LibXML::Document->createDocument('1.0', 'utf-8');
   my $root = XML::LibXML::Element->new('EntitiesDescriptor');
@@ -370,13 +391,14 @@ sub aggregate {
 
   $root->setAttribute('Name', $name);
   $root->setAttribute('validUntil', $validUntil);
+  $root->setAttribute('ID' , $ID);
   $root->setAttributeNS($xsi_ns, 'schemaLocation', $schemaLocation);
 
   eduGAIN_root($root) if ($name eq 'eduid.cz-edugain');
 
   foreach my $entityID (keys %{$md}) {
     my $entity = $md->{$entityID}->{md}->cloneNode(1);
-    eduGAIN_entity($entity) if ($name eq 'eduid.cz-edugain');
+    eduGAIN_entity($entity, $md->{$entityID}->{registrationInstant}) if ($name eq 'eduid.cz-edugain');
     tag_entity($entity, $clarin_tag) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $mefanet_tag) if (grep {$_ eq 'mefanet_sp'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $libraries_tag) if (grep {$_ eq 'libraries'} @{$md->{$entityID}->{tags}});
@@ -397,6 +419,7 @@ startRun($config->cfg);
 my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
 
 my $md = load($config->metadata_dir);
+load_registrationInstant($config->metadata_dir, $md);
 
 foreach my $fed_id (split(/ *, */, $config->federations)) {
   my $fed_filters = $fed_id.'_filters';
@@ -437,7 +460,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 
     if ($export) {
       logger(LOG_DEBUG,  "Exporting $key to file $f.");
-      my $doc = aggregate($entities, $config->$fed_name, $validUntil);
+      my $doc = aggregate($entities, $config->$fed_name, $validUntil, $key);
       my $tidy = XML::Tidy->new('xml' => $doc->toString);
       $tidy->tidy();
 
