@@ -50,7 +50,7 @@ my $mdeduid_ns = 'http://eduid.cz/schema/metadata/1.0';
 my $clarin_tag = 'http://eduid.cz/uri/sp-group/clarin';
 my $mefanet_tag = 'http://eduid.cz/uri/group/mefanet';
 
-my $libraries_tag = 'http://eduid.cz/uri/idp-group/library';
+my $library_tag = 'http://eduid.cz/uri/idp-group/library';
 my $avcr_tag = 'http://eduid.cz/uri/idp-group/avcr';
 my $university_tag = 'http://eduid.cz/uri/idp-group/university';
 
@@ -106,7 +106,7 @@ sub tidyEntityDescriptor {
 	  $element->parentNode->unbindNode;
 	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
       };
-      if($element->textContent =~ m,$libraries_tag,) {
+      if($element->textContent =~ m,$library_tag,) {
 	  $element->parentNode->unbindNode;
 	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
       };
@@ -413,7 +413,7 @@ sub aggregate {
     eduGAIN_entity($entity, $md->{$entityID}->{registrationInstant}) if ($name eq 'eduid.cz-edugain');
     tag_entity($entity, $clarin_tag) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $mefanet_tag) if (grep {$_ eq 'mefanet_sp'} @{$md->{$entityID}->{tags}});
-    tag_entity($entity, $libraries_tag) if (grep {$_ eq 'libraries'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $library_tag) if (grep {$_ eq 'library'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $university_tag) if (grep {$_ eq 'university'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $avcr_tag) if (grep {$_ eq 'avcr'} @{$md->{$entityID}->{tags}});
     $dom->adoptNode($entity);
