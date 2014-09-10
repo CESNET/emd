@@ -49,7 +49,10 @@ my $mdeduid_ns = 'http://eduid.cz/schema/metadata/1.0';
 
 my $clarin_tag = 'http://eduid.cz/uri/sp-group/clarin';
 my $mefanet_tag = 'http://eduid.cz/uri/group/mefanet';
+
 my $libraries_tag = 'http://eduid.cz/uri/idp-group/library';
+my $avcr_tag = 'http://eduid.cz/uri/idp-group/avcr';
+my $university_tag = 'http://eduid.cz/uri/idp-group/university';
 
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
 
@@ -104,6 +107,14 @@ sub tidyEntityDescriptor {
 	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
       };
       if($element->textContent =~ m,$libraries_tag,) {
+	  $element->parentNode->unbindNode;
+	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      };
+      if($element->textContent =~ m,$avcr_tag,) {
+	  $element->parentNode->unbindNode;
+	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      };
+      if($element->textContent =~ m,$university_tag,) {
 	  $element->parentNode->unbindNode;
 	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
       };
@@ -403,6 +414,8 @@ sub aggregate {
     tag_entity($entity, $clarin_tag) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $mefanet_tag) if (grep {$_ eq 'mefanet_sp'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $libraries_tag) if (grep {$_ eq 'libraries'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $university_tag) if (grep {$_ eq 'university'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $avcr_tag) if (grep {$_ eq 'avcr'} @{$md->{$entityID}->{tags}});
     $dom->adoptNode($entity);
     $root->addChild($entity);
   };
