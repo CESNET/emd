@@ -339,6 +339,9 @@ sub tag_entity {
   my $entity = shift;
   my $tag_uri = shift;
 
+  #my $entityID = $entity->getAttribute('entityID');
+  #warn $entityID;
+
   ## Najit SPSSODescriptor
   #my @SPSSO = $entity->getChildrenByTagNameNS($saml20_ns, 'SPSSODescriptor');
   #my $SPSSO = $SPSSO[0];
@@ -351,7 +354,8 @@ sub tag_entity {
     # nemela dostat do skladu, kontroluje se to pri vkladani.
 
     $ext = new XML::LibXML::Element('Extensions');
-    $ext->setNamespace($saml20_ns, 'md', 1);
+    $ext->setNamespace($saml20_ns, 'md', 1);  
+    $entity->setNamespace($saml20_ns, 'md', 0);
     $entity->insertBefore($ext, $entity->firstChild);
   } else {
     # Povedlo se a tak berem tu prvni. Puvodne se pracovalo s
@@ -369,7 +373,9 @@ sub tag_entity {
   my @ea = $ext->getChildrenByTagNameNS($saml20attr_ns, 'EntityAttributes');
   my $ea;
   unless (@ea) {
-      $ea = new XML::LibXML::Element('mdattr:EntityAttributes');
+      $ea = new XML::LibXML::Element('EntityAttributes');
+      $ea->setNamespace($saml20attr_ns, 'mdattr', 1);
+      $entity->setNamespace($saml20attr_ns, 'mdattr', 0);
       $ext->addChild($ea);
   } else {
       $ea = $ea[0];
@@ -379,7 +385,8 @@ sub tag_entity {
   my @a = $ea->getChildrenByTagNameNS($saml20attr_ns, 'Attribute');
   my $a;
   unless (@a) {
-      $a = new XML::LibXML::Element('mdasrt:Attribute');
+      $a = new XML::LibXML::Element('Attribute');
+      $a->setNamespace($saml20attr_ns, 'mdattr', 1);
       $a->setAttribute('NameFormat', 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri');
       $a->setAttribute('Name', 'http://macedir.org/entity-category');
       $ea->addChild($a);
@@ -387,7 +394,9 @@ sub tag_entity {
       $a = $a[0];
   };
 
-  my $av = new XML::LibXML::Element('mdasrt:AttributeValue');
+  my $av = new XML::LibXML::Element('AttributeValue');
+  $av->setNamespace($saml20asrt_ns, 'mdasrt', 1);
+  $entity->setNamespace($saml20asrt_ns, 'mdasrt', 0);
   $av->appendText($tag_uri);
   $a->addChild($av);
 };
