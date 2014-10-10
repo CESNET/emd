@@ -382,11 +382,11 @@ sub tag_entity {
   };
 
   # najit ci vlozit Attribute
-  my @a = $ea->getChildrenByTagNameNS($saml20attr_ns, 'Attribute');
+  my @a = $ea->getChildrenByTagNameNS($saml20asrt_ns, 'Attribute');
   my $a;
   unless (@a) {
       $a = new XML::LibXML::Element('Attribute');
-      $a->setNamespace($saml20attr_ns, 'mdattr', 1);
+      $a->setNamespace($saml20asrt_ns, 'mdasrt', 1);
       $a->setAttribute('NameFormat', 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri');
       $a->setAttribute('Name', 'http://macedir.org/entity-category');
       $ea->addChild($a);
