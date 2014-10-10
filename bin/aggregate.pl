@@ -387,6 +387,7 @@ sub tag_entity {
   unless (@a) {
       $a = new XML::LibXML::Element('Attribute');
       $a->setNamespace($saml20asrt_ns, 'saml', 1);
+      $entity->setNamespace($saml20asrt_ns, 'saml', 0);
       $a->setAttribute('NameFormat', 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri');
       $a->setAttribute('Name', 'http://macedir.org/entity-category');
       $ea->addChild($a);
@@ -396,7 +397,6 @@ sub tag_entity {
 
   my $av = new XML::LibXML::Element('AttributeValue');
   $av->setNamespace($saml20asrt_ns, 'saml', 1);
-  $entity->setNamespace($saml20asrt_ns, 'saml', 0);
   $av->appendText($tag_uri);
   $a->addChild($av);
 };
@@ -417,8 +417,7 @@ sub aggregate {
   $root->setNamespace($xsi_ns, 'xsi', 0);
   $root->setNamespace($ds_ns, 'ds', 0);
   $root->setNamespace($saml20attr_ns, 'mdattr', 0);
-  $root->setNamespace($saml20asrt_ns, 'mdasrt', 0);
-
+  $root->setNamespace($saml20asrt_ns, 'saml', 0);
 
   $root->setAttribute('Name', $name);
   $root->setAttribute('validUntil', $validUntil);
