@@ -29,6 +29,7 @@ my $config = AppConfig->new
    output_dir    => { DEFAULT => '' },
 
    sign_cmd      => { DEFAULT => undef },
+   sign256_cmd   => { DEFAULT => undef },
 
    federations   => { DEFAULT => undef },
 
@@ -508,21 +509,21 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 	binmode F, ":utf8";
 	print F $tidy_string;
 	close(F);
-
-	if (defined($config->sign_cmd)) {
-	  my $cmd = sprintf($config->sign_cmd, $f, $config->output_dir.'/'.$pref.$key);
-	  logger(LOG_DEBUG,  "Signing: '$cmd'");
-	  my $cmd_fh;
-	  open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
-	  my @cmd_out = <CMD>;
-	  close(CMD);
-	  my $ret = $? >> 8;
-	  if ($ret > 0) {
-	    logger(LOG_ERR,  "Command $cmd terminated with error_code=$ret. Output:");
-	    foreach my $line (@cmd_out) {
-	      logger(LOG_ERR, $line);
+	
+	foreach my $sign_cmd ($config->sign_cmd, $config->sign256_cmd) {
+	    my $cmd = sprintf($sign_cmd, $f, $config->output_dir.'/'.$pref.$key);
+	    logger(LOG_DEBUG,  "Signing: '$cmd'");
+	    my $cmd_fh;
+	    open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
+	    my @cmd_out = <CMD>;
+	    close(CMD);
+	    my $ret = $? >> 8;
+	    if ($ret > 0) {
+		logger(LOG_ERR,  "Command $cmd terminated with error_code=$ret. Output:");
+		foreach my $line (@cmd_out) {
+		    logger(LOG_ERR, $line);
+		};
 	    };
-	  };
 	};
       } else {
 	my $f = "/tmp/$pref$key-xml-invalid";
