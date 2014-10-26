@@ -185,7 +185,7 @@ sub load {
     } elsif ($root->getElementsByTagNameNS($saml20_ns, 'SPSSODescriptor')) {
       push @{$md{$entityID}->{tags}}, $SP_tag;
     } else {
-      local_die "entityID=$entityID neni SP ani IdP???";
+      logger(LOG_WARNING, "entityID=$entityID neni SP ani IdP???");
     };
 
     # Zkontrolovat jestli entita nechce republishnout do nektery dalsi federace
