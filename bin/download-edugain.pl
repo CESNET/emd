@@ -14,6 +14,8 @@ use Date::Format;
 use File::Temp qw(tempfile);
 use utf8;
 
+my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
+
 sub load_ignore_list {
   my $file = shift;
   my %ign;
@@ -145,6 +147,30 @@ eval {
 if ($@) {
   logger(LOG_ERR, $@);
   exit 1;
+};
+
+# Odstraneni RoleDescriptor
+
+# Od cca 14.11.2014 jsou v eduGAINu entity ktere obsahuji
+# RoleDescriptor, coz by asi nebylo tak zly, ale prusvih je ze hodota
+# v xsi:type neni definovana v beznych schematech a pak to kolabuje:
+#
+#Nov 17 03:56:28 emd download-edugain.pl[30454]: unknown-a685810:0: Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}RoleDescriptor', attribute '{http://www.w3.org/2001/XMLSchema-instance}type': The QName value '{http://docs.oasis-open.org/wsfed/federation/200706}ApplicationServiceType' of the xsi:type attribute does not resolve to a type definition.
+#unknown-a685810:0: Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}RoleDescriptor': The type definition is abstract.
+#unknown-a685810:0: Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}RoleDescriptor', attribute '{http://www.w3.org/2001/XMLSchema-instance}type': The QName value '{http://docs.oasis-open.org/wsfed/federation/200706}SecurityTokenServiceType' of the xsi:type attribute does not resolve to a type definition.
+#unknown-a685810:0: Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}RoleDescriptor': The type definition is abstract.
+#unknown-a685810:0: Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}RoleDescriptor', attribute '{http://www.w3.org/2001/XMLSchema-instance}type': The QName value '{http://docs.oasis-open.org/wsfed/federation/200706}ApplicationServiceType' of the xsi:type attribute does not resolve to a type definition.
+#unknown-a685810:0: Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}RoleDescriptor': The type definition is abstract.
+#unknown-a685810:0: Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}RoleDescriptor', attribute '{http://www.w3.org/2001/XMLSchema-instance}type': The QName value '{http://docs.oasis-open.org/wsfed/federation/200706}SecurityTokenServiceType' of the xsi:type attribute does not resolve to a type definition.
+#unknown-a685810:0: Schemas validity error : Element '{urn:oasis:names:tc:SAML:2.0:metadata}RoleDescriptor': The type definition is abstract.
+# Je treba pridat schema:
+# https://github.com/ukf/ukf-meta/blob/master/mdx/schema/ws-federation.xsd
+
+# Semik: Obavam se to udela nasim SP/IdP problem s validaci, takze
+# tenhle element odstranuji. Jenze co kdyz to bude nekdo potrebovat?
+
+foreach my $roleDescriptor (@{$doc->getElementsByTagNameNS($saml20_ns, 'RoleDescriptor')}) {
+  $roleDescriptor->unbindNode();
 };
 
 # Overeni
