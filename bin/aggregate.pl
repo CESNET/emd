@@ -56,6 +56,7 @@ my $avcr_tag = 'http://eduid.cz/uri/idp-group/avcr';
 my $university_tag = 'http://eduid.cz/uri/idp-group/university';
 my $hospital_tag = 'http://eduid.cz/uri/idp-group/hospital';
 my $cesnet_tag = 'http://eduid.cz/uri/idp-group/cesnet';
+my $aa_access_tag = 'http://eduid.cz/uri/sp-group/aa.cesnet.cz';
 
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
 
@@ -126,6 +127,10 @@ sub tidyEntityDescriptor {
 	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
       };
       if($element->textContent =~ m,$cesnet_tag,) {
+	  $element->parentNode->unbindNode;
+	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      };
+      if($element->textContent =~ m,$aa_access_tag,) {
 	  $element->parentNode->unbindNode;
 	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
       };
@@ -437,6 +442,7 @@ sub aggregate {
     tag_entity($entity, $hospital_tag) if (grep {$_ eq 'hospital'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $cesnet_tag) if (grep {$_ eq 'cesnet'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $avcr_tag) if (grep {$_ eq 'avcr'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $aa_access_tag) if (grep {$_ eq 'aa-access'} @{$md->{$entityID}->{tags}});
     $dom->adoptNode($entity);
     $root->addChild($entity);
   };
