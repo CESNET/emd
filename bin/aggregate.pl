@@ -101,39 +101,70 @@ sub tidyEntityDescriptor {
   };
 
   # Semik: 3. 4. 2014 - odstraneni skupiny SP clarin - tohle ridime pomoci clarin_sp.tag
+
   foreach my $element ($node->getElementsByTagNameNS($saml20asrt_ns, 'AttributeValue')) {
-      if($element->textContent =~ m,$clarin_tag,) {
-	  $element->parentNode->unbindNode;
-	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      my $parent = $element->parentNode;
+      my $textContent = $element->textContent;
+      my $removed = 0;
+
+      if($textContent =~ m,$clarin_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
-      if($element->textContent =~ m,$mefanet_tag,) {
-	  $element->parentNode->unbindNode;
-	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      if($textContent =~ m,$mefanet_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
-      if($element->textContent =~ m,$library_tag,) {
-	  $element->parentNode->unbindNode;
-	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      if($textContent =~ m,$library_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
-      if($element->textContent =~ m,$avcr_tag,) {
-	  $element->parentNode->unbindNode;
-	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      if($textContent =~ m,$avcr_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
-      if($element->textContent =~ m,$university_tag,) {
-	  $element->parentNode->unbindNode;
-	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      if($textContent =~ m,$university_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
-      if($element->textContent =~ m,$hospital_tag,) {
-	  $element->parentNode->unbindNode;
-	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      if($textContent =~ m,$hospital_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
-      if($element->textContent =~ m,$cesnet_tag,) {
-	  $element->parentNode->unbindNode;
-	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      if($textContent =~ m,$cesnet_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
-      if($element->textContent =~ m,$aa_access_tag,) {
-	  $element->parentNode->unbindNode;
-	  logger(LOG_INFO, "Removed ".$element->parentNode->nodeName." from metadata of $entityID.");
+      if($textContent =~ m,$aa_access_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
+
+      # Kontrola ze po pripadnem odstraneni nezustane prazdny
+      # element. Pouziti textoveho obsahu je ojeb ale zda se ze to
+      # funguje vcetne komentaru.
+      # ....
+      #  <EntityAttributes>
+      #    <Attribute>
+      #      <AttributeValue>
+      #       
+      if ($removed) {
+	  my $text = $parent->parentNode->textContent;
+	  if ($text =~ /^\s*$/) {
+	      my $parent2 = $parent->parentNode;
+	      $parent2->parentNode->removeChild($parent2);
+	      logger(LOG_INFO, "Removed empty ".$parent2->nodeName." from metadata of $entityID.");
+	  };
+      };
+
   };
 
   return $node;
