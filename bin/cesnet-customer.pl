@@ -1,8 +1,8 @@
-#!/bin/perl -w
+#!/usr/bin/perl -w
 
 use strict;
 use utf8;
-use lib qw(./lib);
+use lib qw(./emd/lib);
 use XML::LibXML;
 use Sys::Syslog qw(:standard :macros);
 use AppConfig qw(:expand);
@@ -35,6 +35,11 @@ my $config = AppConfig->new
      showStats          => {DEFAULT => 0},
     );
 
+$config->args(\@ARGV) or
+    die "Can't parse cmdline args";
+$config->file($config->cfg) or
+    die "Can't open config file \"".$config->cfg."\": $!";
+
 my $conn = new myPerlLDAP::conn({"host"   => $config->LDAPServer,
                                  "port"   => $config->LDAPServerPort,
                                  "bind"   => $config->BindDN,
@@ -43,11 +48,6 @@ my $conn = new myPerlLDAP::conn({"host"   => $config->LDAPServer,
     local_die "Can't create myPerlLDAP::conn object";
 $conn->init or
     local_die "Can't open LDAP connection to ".$config->LDAPServer.":".$config->LDAPServerPort.": ".$conn->errorMessage;
-
-$config->args(\@ARGV) or
-    die "Can't parse cmdline args";
-$config->file($config->cfg) or
-    die "Can't open config file \"".$config->cfg."\": $!";
 
 # nacist metadata
 my $parser = XML::LibXML->new;
