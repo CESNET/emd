@@ -1,3 +1,4 @@
+
 #!/usr/bin/perl -w
 
 use strict;
@@ -38,7 +39,7 @@ my $loc_dir = $config->svn_data_dir;
 my $svn_module = $config->svn_module;
 while (my $line = <SVNI>) {
   $location = 1 if ($line =~ m,^Path: $svn_module,);
-  $location = 2 if ($line =~ m,^Path: $loc_dir,);
+  $location = 2 if ($line =~ m,^Working Copy Root Path: $loc_dir,);
   if ($line =~ /^Revision: (\d+)/) {
     my $rev = $1;
     $repository = $rev if ($location == 1);
