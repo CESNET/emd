@@ -12,6 +12,7 @@ use LWP::UserAgent;
 use Date::Manip;
 use Date::Format;
 use File::Temp qw(tempfile);
+use File::Touch;
 use utf8;
 
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
@@ -116,6 +117,7 @@ if ($response->is_success) {
     my $metadata = $response->content;
     utf8::decode($metadata);
     if (store_to_file($config->metadata_file, $metadata)==0) {
+      touch($config->metadata_file);
       logger(LOG_INFO, sprintf('Nothing new. Terminating.'));
       exit 0;
     };
