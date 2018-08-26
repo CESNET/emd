@@ -1,5 +1,5 @@
 https://whoami.cesnet.cz/idp/shibboleth
-# Docasna vyjimka do 11/2010. Semik 14.9.2010 XYZY
+# Docasna vyjimka do 11/2010. Semik 14.9.2010
 8W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:2.0:nameid-format:persistent.
 # Docasna vyjimka do 11/2010. Semik 14.9.2010
 9W: NameIDFormat suport is missing required urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified.

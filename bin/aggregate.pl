@@ -50,12 +50,14 @@ my $mdeduid_ns = 'http://eduid.cz/schema/metadata/1.0';
 
 my $clarin_tag = 'http://eduid.cz/uri/sp-group/clarin';
 my $mefanet_tag = 'http://eduid.cz/uri/group/mefanet';
+my $mojeid_edu_tag = 'http://eduid.cz/uri/sp-group/mojeid-edu';
 
 my $library_tag = 'http://eduid.cz/uri/idp-group/library';
 my $avcr_tag = 'http://eduid.cz/uri/idp-group/avcr';
 my $university_tag = 'http://eduid.cz/uri/idp-group/university';
 my $hospital_tag = 'http://eduid.cz/uri/idp-group/hospital';
 my $cesnet_tag = 'http://eduid.cz/uri/idp-group/cesnet';
+my $other_tag = 'http://eduid.cz/uri/idp-group/other';
 my $aa_access_tag = 'http://eduid.cz/uri/sp-group/aa.cesnet.cz';
 
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
@@ -117,7 +119,17 @@ sub tidyEntityDescriptor {
 	  $removed++;
 	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
+      if($textContent =~ m,$mojeid_edu_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
+      };
       if($textContent =~ m,$library_tag,) {
+	  $parent->removeChild($element);
+	  $removed++;
+	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
+      };
+      if($textContent =~ m,$other_tag,) {
 	  $parent->removeChild($element);
 	  $removed++;
 	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
@@ -216,11 +228,17 @@ sub load {
     $md{$entityID}->{mtime} = $stat[9];
     $md{$entityID}->{registrationInstant} = UnixDate(ParseDate('epoch '.$stat[9]), '%Y-%m-%dT%H:%M:%SZ');
 
-    if ($root->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor')) {
+    my $idpsp = 0;
+    if ($root->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor') or
+        $root->getElementsByTagNameNS($saml20_ns, 'AttributeAuthorityDescriptor')) {
       push @{$md{$entityID}->{tags}}, $IdP_tag;
-    } elsif ($root->getElementsByTagNameNS($saml20_ns, 'SPSSODescriptor')) {
+      $idpsp++;
+    };
+    if ($root->getElementsByTagNameNS($saml20_ns, 'SPSSODescriptor')) {
       push @{$md{$entityID}->{tags}}, $SP_tag;
-    } else {
+      $idpsp++;
+    };
+    unless ($idpsp) {
       logger(LOG_WARNING, "entityID=$entityID neni SP ani IdP???");
     };
 
@@ -253,6 +271,18 @@ sub load {
       };
     };
   };
+
+  # zlikvidovat z eduid2edugain ty co nejsou v eduid ... tohle je stupidni
+  foreach my $entityID (keys %md) {
+    my @tags = @{$md{$entityID}->{tags}};
+    my @ex_tags = grep {$_ ne 'eduid2edugain'} @tags;
+    if ((scalar(@tags) > scalar(@ex_tags)) and
+	not (grep {$_ eq 'eduid'} @ex_tags)) {
+      logger(LOG_INFO, "Entity \"$entityID\" is not taged anywhere, it should be deleted from SVN."); 
+      $md{$entityID}->{tags} = \@ex_tags;
+    }
+  };
+
 
   return \%md;
 };
@@ -419,17 +449,21 @@ sub tag_entity {
   };
 
   # najit ci vlozit Attribute
-  my @a = $ea->getChildrenByTagNameNS($saml20asrt_ns, 'Attribute');
   my $a;
-  unless (@a) {
+  foreach my $_a ($ea->getChildrenByTagNameNS($saml20asrt_ns, 'Attribute')) {
+      my $name = $_a->getAttribute('Name');
+      # zkontrolovat ze jsme nasli Attribute se spravnym jmenem
+      if ($name eq 'http://macedir.org/entity-category') {
+	  $a = $_a;
+      };
+  };
+  unless ($a) {
       $a = new XML::LibXML::Element('Attribute');
       $a->setNamespace($saml20asrt_ns, 'saml', 1);
       $entity->setNamespace($saml20asrt_ns, 'saml', 0);
       $a->setAttribute('NameFormat', 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri');
       $a->setAttribute('Name', 'http://macedir.org/entity-category');
       $ea->addChild($a);
-  } else {
-      $a = $a[0];
   };
 
   my $av = new XML::LibXML::Element('AttributeValue');
@@ -468,10 +502,11 @@ sub aggregate {
     eduGAIN_entity($entity, $md->{$entityID}->{registrationInstant}) if ($name eq 'eduid.cz-edugain');
     tag_entity($entity, $clarin_tag) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $mefanet_tag) if (grep {$_ eq 'mefanet_sp'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $mojeid_edu_tag) if (grep {$_ eq 'mojeid-edu'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $library_tag) if (grep {$_ eq 'library'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $other_tag) if (grep {$_ eq 'other'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $university_tag) if (grep {$_ eq 'university'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $hospital_tag) if (grep {$_ eq 'hospital'} @{$md->{$entityID}->{tags}});
-    tag_entity($entity, $cesnet_tag) if (grep {$_ eq 'cesnet'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $avcr_tag) if (grep {$_ eq 'avcr'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $aa_access_tag) if (grep {$_ eq 'aa-access'} @{$md->{$entityID}->{tags}});
     $dom->adoptNode($entity);
