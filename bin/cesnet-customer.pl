@@ -186,7 +186,7 @@ foreach my $entity (@{$root->getElementsByTagNameNS($saml20_ns, 'EntityDescripto
 	my $ldif = "dn: dc=$now,ou=Organizations,o=eduID.cz,o=apps,dc=cesnet,dc=cz
 dc: $now
 objectClass: top
-objectClass: eduIDczOrganization
+objectClass: eduidczorganization
 oPointer: dc=,ou=Organizations,dc=cesnet,dc=cz
 entityidofidp: $entityID\n\n";
 	$now++;
@@ -226,15 +226,18 @@ entityidofidp: $entityID\n\n";
 };
 
 if ($config->showStats) {
+    print("Subject: monthly eduID.cz IdP review\n\n");
     printf("Total known entities: %d, customers: %d (members: %d), other: %d
 Unknown entities: ".scalar(@missing)."\n\n",
 	   $total, scalar(@zakaznici), scalar(@clenove), scalar(@ostatni));
-    print("List of customers:\n",
+    print("List of customers (".scalar(@zakaznici)."):\n",
 	  join("\n", sort map { "    $_"} @zakaznici)."\n\n");
-    print("List of other members:\n",
+    print("List of other eduID.cz members (".scalar(@ostatni)."):\n",
 	  join("\n", sort map { "    $_"} @ostatni)."\n\n"); 
 };
 
-print("Complete following LDIF and submit it into LDAP:
+if (@missing) {
+    print("Complete following LDIF and submit it into LDAP:
 
 ".join('', @missing)."\n");
+};
