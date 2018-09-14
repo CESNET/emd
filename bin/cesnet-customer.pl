@@ -2,6 +2,7 @@
 
 use strict;
 use utf8;
+use locale;
 use lib qw(./emd/lib);
 use Data::Dumper;
 use XML::LibXML;
@@ -228,11 +229,11 @@ entityidofidp: $entityID\n\n";
 };
 
 if ($config->showStats) {
-    print("Subject: monthly eduID.cz IdP review\n\n");
+    print("Subject: [eduID.cz #267261] monthly eduID.cz IdP review\n\n");
     printf("Total known entities: %d, customers: %d (members: %d), other: %d
 Unknown entities: ".scalar(@missing)."\n\n",
 	   $total, scalar(@zakaznici), scalar(@clenove), scalar(@ostatni));
-    print("List of customers (".scalar(@zakaznici)."):\n",
+    print("List of CESNET customers and members (".scalar(@zakaznici)."):\n",
 	  join("\n", sort map { "    $_"} @zakaznici)."\n\n");
     print("List of other eduID.cz members (".scalar(@ostatni)."):\n",
 	  join("\n", sort map { "    $_"} @ostatni)."\n\n"); 
