@@ -44,6 +44,8 @@ my $config = AppConfig->new
 #   (idp_category='library' and (affiliate='employee')) or
 #   (idp_category='hospital' and (affiliate='employee')) or
 #   (idp_category='other' and ((affiliate='employee') or (affiliate='member')))
+#
+# Implementace diskutovana v https://rt.cesnet.cz/rt/Ticket/Display.html?id=264604
 
 my $category2affiation = {
     'http://eduid.cz/uri/idp-group/university' => ['employee', 'faculty', 'member', 'student', 'staff' ],
