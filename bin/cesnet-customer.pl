@@ -3,6 +3,7 @@
 use strict;
 use utf8;
 use lib qw(./emd/lib);
+use Data::Dumper;
 use XML::LibXML;
 use Sys::Syslog qw(:standard :macros);
 use AppConfig qw(:expand);
@@ -14,6 +15,8 @@ use myPerlLDAP::attribute;
 use myPerlLDAP::utils qw(:all);
 
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
+my $saml20attr_ns = 'urn:oasis:names:tc:SAML:metadata:attribute';
+my $saml20asrt_ns = 'urn:oasis:names:tc:SAML:2.0:assertion';
 
 my $config = AppConfig->new
     ({
@@ -34,6 +37,100 @@ my $config = AppConfig->new
      eduIDOrgBase       => {DEFAULT => 'ou=Organizations,o=eduID.cz,o=apps,dc=cesnet,dc=cz'},
      showStats          => {DEFAULT => 0},
     );
+
+# https://www.eduid.cz/cs/tech/categories/eduidcz - kategorie IdP v eduID.cz
+#   (idp_category='university' and ((affiliate='employee') or (affiliate='faculty') or (affiliate='member') or (affiliate='student') or (affiliate='staff'))) or
+#   (idp_category='avcr' and (affiliate='member')) or
+#   (idp_category='library' and (affiliate='employee')) or
+#   (idp_category='hospital' and (affiliate='employee')) or
+#   (idp_category='other' and ((affiliate='employee') or (affiliate='member')))
+
+my $category2affiation = {
+    'http://eduid.cz/uri/idp-group/university' => ['employee', 'faculty', 'member', 'student', 'staff' ],
+    'http://eduid.cz/uri/idp-group/avcr'       => ['member'],
+    'http://eduid.cz/uri/idp-group/library'    => ['employee'],
+    'http://eduid.cz/uri/idp-group/hospital'   => ['employee'],
+    'http://eduid.cz/uri/idp-group/other'      => ['employee', 'member'],
+};
+
+sub update_affiliation {
+    my $entry = shift;
+    my $entity = shift;
+    my $zakaznik = shift;
+
+    my $idp_category = '';
+    my $affiliations = [];
+
+    my $entityID = $entity->getAttribute('entityID');
+    my $entryDN = $entry->dn;
+
+  ATTRIBUTES:
+    foreach my $entityAttributes (@{$entity->getElementsByTagNameNS($saml20attr_ns, 'EntityAttributes')}) {
+	#<mdattr:EntityAttributes>
+	#  <saml:Attribute NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" Name="http://macedir.org/entity-category">
+        #    <saml:AttributeValue>http://eduid.cz/uri/idp-group/library</saml:AttributeValue>
+        #  </saml:Attribute>
+        #</mdattr:EntityAttributes> at /home/mdx/emd/bin/cesnet-customer.pl line 48.
+
+	foreach my $attribute (@{$entityAttributes->getElementsByTagNameNS($saml20asrt_ns, 'Attribute')}) {
+	    next unless $attribute;
+	    next unless ($attribute->getAttribute('Name') eq 'http://macedir.org/entity-category');
+
+	    foreach my $aval (@{$attribute->getElementsByTagNameNS($saml20asrt_ns, 'AttributeValue')}) {
+		$idp_category = $aval->textContent;
+		$idp_category =~ s/\s//mg;
+
+		# IdP muze byt pouze v jedne kategorii, to je pravidlo eduID.cz.
+		last ATTRIBUTES if ($idp_category =~ m,http://eduid.cz/uri/idp-group/,);
+
+		$idp_category = '';
+	    };
+	};
+    };
+
+    if (length($idp_category)>0 and (exists $category2affiation->{$idp_category})) {
+	$affiliations = $category2affiation->{$idp_category} if ($zakaznik);
+    } else {
+	logger(LOG_INFO, "$entityID is missing entity category!");
+    };
+
+    my (@add, @del);
+    my $cca = $entry->attr('cesnetCustomerAffiliation');
+    if ((not defined $cca) and (@{$affiliations})) {
+	# entry nema zadny
+	$entry->addValues('cesnetCustomerAffiliation', $affiliations);
+	push @add, @{$affiliations};
+    } else {
+	my @ldap = ();
+	@ldap = @{$cca->getValues} if ($cca);
+
+	# zkontrolovat jestli v LDAPu mame vsechny atributy ktere bych meli mit
+	foreach my $affiliation (@{$affiliations}) {
+	    unless (grep { $_ eq $affiliation } @ldap) {
+		push @add, $affiliation;
+		$entry->addValues('cesnetCustomerAffiliation', $affiliation);
+	    };
+	};
+
+	# zkontrolovat jestli v LDAPu nemame neco navic
+	foreach my $ldap (@ldap) {
+	    unless (grep { $_ eq $ldap} @{$affiliations}) {
+		push @del, $ldap;
+		$entry->removeValues('cesnetCustomerAffiliation', $ldap);
+	    };
+	};
+    };
+
+    if ((@add > 0) or (@del > 0)) {
+	my @log;
+	push @log, map { "+$_"; } @add;
+	push @log, map { "-$_"; } @del;
+	logger(LOG_INFO,
+	       "$entityID ($entryDN): cesnetCustomerAffiliation: ".join(", ", @log));
+    };
+
+    return $entry->isModified;
+};
 
 $config->args(\@ARGV) or
     die "Can't parse cmdline args";
@@ -106,12 +203,22 @@ entityidofidp: $entityID\n\n";
 	if ($clen =~ /TRUE/i) {
 	    push @clenove, "$o ($entityID)";
 	};
+	my $bzakaznik = 0;
 	if ($zakaznik =~ /TRUE/i) {
+	    $bzakaznik = 1;
 	    my $z = "$o ($entityID)";
 	    $z .= ' MEMBER' if ($clen =~ /TRUE/i);
 	    push @zakaznici, $z;
 	} else {
 	    push @ostatni, "$o ($entityID)";
+	};
+	if (update_affiliation($entry, $entity, $bzakaznik)) {
+	    # neco se zmenilo v LDAPu;
+	    if ($conn->update($entry)) {
+		logger(LOG_INFO, "$entityID updated");
+	    } else {
+		logger(LOG_INFO, "$entityID failed to update LDAP: ".$conn->errorMessage);
+	    };
 	};
     } elsif ($sres->count > 1) {
 	push @problems, "Multiple records for $entityID in baseDN=".$config->eduIDOrgBase."\n";
