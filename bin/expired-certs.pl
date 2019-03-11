@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl libxml-tidy-perl
+# apt-get install libcrypt-openssl-x509-perl libmime-lite-perl
 
 use strict;
 use lib qw(emd2/lib lib);
@@ -22,7 +22,7 @@ my $mdrpi_ns = 'urn:oasis:names:tc:SAML:metadata:rpi';
 my $mdui_ns = 'urn:oasis:names:tc:SAML:metadata:ui';
 my $mdeduid_ns = 'http://eduid.cz/schema/metadata/1.0';
 
-my $metadata = 'Downloads/eduid'; 
+my $metadata = $ARGV[0]; 
 my $parser = XML::LibXML->new;
 open my $fh, $metadata or die "Failed to open $metadata: $!";
 #binmode $fh, ":utf8";
@@ -76,12 +76,16 @@ foreach my $entity (@{$root->getElementsByTagNameNS($saml20_ns, 'EntityDescripto
 	foreach my $contact (@{$entity->getElementsByTagNameNS($saml20_ns, 'ContactPerson')}) {
 	    if ($contact->getAttribute('contactType') eq 'technical') {
 		my $email = $contact->getElementsByTagNameNS($saml20_ns, 'EmailAddress')->[0];
-		push @to, $email->textContent;
+		$email = $email->textContent;
+		$email =~ s/^mailto://i;
+		push @to, $email;
 	    };
 	};
 
 	my $x509 = (values(%expired_certs))[0];
 
+	# semik debug --------------------------------------
+	#next;
 	my $msg = 'Dobrý den,
 
 entita
@@ -105,7 +109,9 @@ S pozdravem
 
 	my $m = MIME::Lite->new(
 	    From    => 'eduid-admin@eduid.cz',
-	    To      => 'jan@tomasek.cz',
+	    Bcc     => 'eduid-admin@eduid.cz',
+	    #To      => 'jan@tomasek.cz',
+	    To      => join(', ', @to),
 	    Subject => 'Vyexpirovany certifikat u '.$entityID,
 	    Type    => 'text/plain; charset=UTF-8',
 	    Data    => encode('utf8', $msg),
