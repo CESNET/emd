@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-use strict;
+use strict;     # cs_CZ.UTF-8 locales required!!!
 use utf8;
 use locale;
 use lib qw(./emd/lib);
