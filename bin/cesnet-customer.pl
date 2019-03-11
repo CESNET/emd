@@ -190,7 +190,7 @@ foreach my $entity (@{$root->getElementsByTagNameNS($saml20_ns, 'EntityDescripto
 dc: $now
 objectClass: top
 objectClass: eduidczorganization
-oPointer: dc=,ou=Organizations,dc=cesnet,dc=cz
+oPointer: dc=__DOPLNIT__,ou=Organizations,dc=cesnet,dc=cz
 entityidofidp: $entityID\n\n";
 	$now++;
 	push @missing, "$ldif";
@@ -213,7 +213,9 @@ entityidofidp: $entityID\n\n";
 	    $z .= ' MEMBER' if ($clen =~ /TRUE/i);
 	    push @zakaznici, $z;
 	} else {
-	    push @ostatni, "$o ($entityID)";
+            my $oo = $o;
+	    $oo = '' unless(defined($o));
+	    push @ostatni, "$oo (entityID)"
 	};
 	if (update_affiliation($entry, $entity, $bzakaznik)) {
 	    # neco se zmenilo v LDAPu;
@@ -240,6 +242,7 @@ Unknown entities: ".scalar(@missing)."\n\n",
 };
 
 if (@missing) {
+    print("Subject: [eduID.cz #330914] Pripominka aktualizace ciselniku organizaci v eduID.cz\n");
     print("Complete following LDIF and submit it into LDAP:
 
 ".join('', @missing)."\n");
