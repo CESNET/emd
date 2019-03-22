@@ -215,7 +215,7 @@ entityidofidp: $entityID\n\n";
 	} else {
             my $oo = $o;
 	    $oo = '' unless(defined($o));
-	    push @ostatni, "$oo (entityID)"
+	    push @ostatni, "$oo ($entityID)"
 	};
 	if (update_affiliation($entry, $entity, $bzakaznik)) {
 	    # neco se zmenilo v LDAPu;
