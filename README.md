@@ -16,3 +16,6 @@
 [cesnet-customer.pl](bin/cesnet-customer.pl) zpracovává eduID.cz metadata IdP a pro každou entityID kontroluje číselník v LDAPu jestli ji máme evidovanou. Pokud ne, tak prostřednictvím crona mailuje před-připravený LDIF který se musí doplnit o vazbu entityID - DN organizace z CESNETího číselníku. Pokud se zavolá s parametrem --showStats=1 tak zobrazí jednoduché statistiky o entitách v eduID.cz z pohledu jestli majitelé jsou nebo nejsou zákazníky CESNETu.
 
 Skript dále zajištuje plnění atributu cesnetCustomerAffiliation pro jednotlivé záznamy v LDAPu na základě kategorie entity a toho jestli dotyčná entita patří nebo nepatří zákazníkovi.
+
+## resign-download.sh
+[resign-download.sh](bin/resign-download.sh) stahování a přepodepisování metadat z jaggeru.
