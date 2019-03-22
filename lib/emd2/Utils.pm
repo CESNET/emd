@@ -8,12 +8,14 @@ use Sys::Syslog qw(:standard :macros);
 use Proc::ProcessTable;
 use File::Temp qw(tempfile);
 use Digest::MD5 qw (md5_hex md5_base64);
+use XML::LibXML;
+use Data::Dumper;
 
 @ISA = qw(Exporter);
 $VERSION = "0.0.1";
 %EXPORT_TAGS = (
                 all => [qw(getNormalizedEntityID getXMLelementAStext ew2string
-			   logger local_die startRun stopRun store_to_file prg_name)]
+			   logger local_die startRun stopRun store_to_file prg_name xml_strip_whitespace)]
                 );
 # Add Everything in %EXPORT_TAGS to @EXPORT_OK
 Exporter::export_ok_tags('all');
@@ -183,5 +185,45 @@ sub store_to_file {
 
   return $res;
 };
+
+sub trim {
+    my ($text)=@_;
+    $text=~s/^\s*//mg;
+    $text=~s/\s*$//mg;
+    return $text;
+}
+
+sub xml_strip_whitespace_it {
+    my ($node)=@_;
+    my $nodeType = $node->nodeType();
+    if ($nodeType == XML::LibXML::XML_TEXT_NODE) {
+	my $data=trim($node->getData());
+	if ($data ne "") {
+	    $node->setData($data);
+	}
+    } elsif ($nodeType == XML::LibXML::XML_ELEMENT_NODE) {
+	die $node->toString;
+    };
+};
+
+
+sub xml_strip_whitespace {
+    my $node = shift;
+
+    foreach my $child_node ($node->childNodes) {
+	my $nodeType = $child_node->nodeType();
+	if ($nodeType == XML::LibXML::XML_TEXT_NODE) {
+	    my $data=trim($child_node->getData());
+	    if ($data ne "") {
+		$child_node->setData($data);
+	    } else {
+		$child_node->unbindNode();
+	    }
+	} else {
+	    xml_strip_whitespace($child_node);
+	};
+    };
+}
+
 
 1;

@@ -13,6 +13,7 @@ use Date::Manip;
 use Date::Format;
 use File::Temp qw(tempfile);
 use File::Touch;
+use Git::Repository;
 use utf8;
 
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
@@ -69,6 +70,8 @@ return;
 
 };
 
+startRun;
+
 my $md_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
 my $config = AppConfig->new
   ({
@@ -119,6 +122,7 @@ if ($response->is_success) {
     if (store_to_file($config->metadata_file, $metadata)==0) {
       touch($config->metadata_file);
       logger(LOG_INFO, sprintf('Nothing new. Terminating.'));
+      stopRun;
       exit 0;
     };
     logger(LOG_INFO, sprintf('Updated file %s with source metadata',
@@ -241,42 +245,42 @@ foreach my $ed ($doc->getElementsByTagNameNS($md_ns, 'EntityDescriptor')) {
 my $eduGain = join("\n", sort keys %eduGain);
 $update++ if (store_to_file($config->metadata_dir."/edugain.tag", $eduGain));
 
+my $r = Git::Repository->new(work_tree => $config->metadata_dir,
+			     {quiet => 1}
+    );
+
 if (@add) {
-  my $cmd = '/usr/bin/svn add --username svnwriter --config-dir /home/edugain/.svnc '.join(" ", @add);
-  open(SVNC, "$cmd 2>&1 |") or do {
-    logger(LOG_ERR, "Failed to execute svn add: $?");
-    exit 1;
-  };
-  my @out = <SVNC>;
-  close(SVNC);
-  my $ret = $? >> 8;
-  if ($ret > 0) {
-    logger(LOG_ERR, "svn add terminated with error_code=$ret. Output:");
-    foreach my $line (@out) { logger(LOG_ERR, $line); };	
-    exit 1;
-  } else {
-    logger(LOG_INFO, 'Sucessfull commit: '.$cmd.", terminated with $?");
-    foreach my $line (@out) { logger(LOG_ERR, $line); };	
-  };
+    foreach my $file (@add) {
+	$r->run('add' => $file);
+	my $ret = $? >> 8;
+	if ($ret > 0) {
+	    logger(LOG_ERR, "git add $file terminated with error_code=$ret");
+	    exit 1;
+	} else {
+	    logger(LOG_ERR, "git add $file OK");
+	};
+    };
+
+    $update++;
 };
 
 if ($update) {
-  my $cmd = '/usr/bin/svn commit --username svnwriter --config-dir /home/edugain/.svnc '.
-    $config->metadata_dir.' -m "Automatic update by '.prg_name.'"';
-  open(SVNC, "$cmd 2>&1 |") or do {
-    logger(LOG_ERR, "Failed to execute svn commit: $?");
-    exit 1;
-  };
-  my @out = <SVNC>;
-  close(SVNC);
-  my $ret = $? >> 8;
-  if ($ret > 0) {
-    logger(LOG_ERR, "svn add terminated with error_code=$ret. Output:");
-    foreach my $line (@out) { logger(LOG_ERR, $line); };	
-    exit 1;
-  } else {
-    logger(LOG_INFO, "Some entities in store were updated.");
-    foreach my $line (@out) { logger(LOG_ERR, $line); };	
-  };
+    $r->run('commit' => '-a', '-m', 'Automatic update by '.prg_name);
+    my $ret = $? >> 8;
+    if ($ret > 0) {
+	logger(LOG_INFO, "git commit terminated with error_coce=$ret");
+	exit 1;
+    } else {
+	logger(LOG_INFO, "sucessfull commit");
+	$r->run('push');
+	my $ret = $? >> 8;
+	if ($ret > 0) {
+	    logger(LOG_INFO, "git commit terminated with error_coce=$ret");
+	    exit 1;
+	} else {
+	    logger(LOG_INFO, "sucessfull push");
+	};
+    };
 };
 
+stopRun;

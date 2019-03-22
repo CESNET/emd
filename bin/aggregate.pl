@@ -1,17 +1,18 @@
 #!/usr/bin/perl -w
 
-# apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl libxml-tidy-perl
+# apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl
 
 use strict;
 use lib qw(emd2/lib lib);
 use Data::Dumper;
 use Date::Manip;
 use XML::LibXML;
-use XML::Tidy;
 use Sys::Syslog qw(:standard :macros);
 use AppConfig qw(:expand);
-use emd2::Utils qw (logger local_die startRun stopRun);
+use emd2::Utils qw (logger local_die startRun stopRun xml_strip_whitespace);
 use emd2::Checker qw (checkXMLValidity);
+use Proc::ProcessTable;
+use Number::Bytes::Human qw(format_bytes);
 use utf8;
 
 my $config = AppConfig->new
@@ -23,7 +24,7 @@ my $config = AppConfig->new
 
    cfg           => { DEFAULT => '' },
 
-   svn_config_dir        => { DEFAULT => undef },
+   svn_config_dir=> { DEFAULT => undef },
 
    metadata_dir  => { DEFAULT => '' },
    output_dir    => { DEFAULT => '' },
@@ -64,6 +65,17 @@ my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-
 
 my $IdP_tag = 'idp';
 my $SP_tag = 'sp';
+
+sub getSelfSize {
+    my $t = Proc::ProcessTable->new();
+
+    foreach my $p ( @{$t->table} ) {
+	if($p->pid() == $$) {
+	    return format_bytes($p->size, bs=>1024);
+	}
+    }
+    return -1;
+};
 
 sub tidyEntityDescriptor {
   my $node = shift;
@@ -212,7 +224,7 @@ sub load {
     my $string = join('', <$fh>);
     my $xml;
     eval {
-      $xml = $parser->parse_string($string);
+      $xml = $parser->parse_string($string, { no_blanks => 1 });
     };
     if ($@) {
       my $err = $@;
@@ -220,7 +232,10 @@ sub load {
     };
     close $fh;
 
+
     my $root = $xml->documentElement;
+    xml_strip_whitespace($root);
+    #die $root->toString;
     my $entityID = $root->getAttribute('entityID');
     $md{$entityID}->{md} = tidyEntityDescriptor($root);
 
@@ -497,7 +512,7 @@ sub aggregate {
 
   eduGAIN_root($root) if ($name eq 'eduid.cz-edugain');
 
-  foreach my $entityID (keys %{$md}) {
+  foreach my $entityID (sort keys %{$md}) {
     my $entity = $md->{$entityID}->{md}->cloneNode(1);
     eduGAIN_entity($entity, $md->{$entityID}->{registrationInstant}) if ($name eq 'eduid.cz-edugain');
     tag_entity($entity, $clarin_tag) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
@@ -526,6 +541,7 @@ startRun($config->cfg);
 my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
 
 my $md = load($config->metadata_dir);
+
 load_registrationInstant($config->metadata_dir, $md);
 
 foreach my $fed_id (split(/ *, */, $config->federations)) {
@@ -568,10 +584,22 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     if ($export) {
       logger(LOG_DEBUG,  "Exporting $key to file $f.");
       my $doc = aggregate($entities, $config->$fed_name, $validUntil, $key);
-      my $tidy = XML::Tidy->new('xml' => $doc->toString);
-      $tidy->tidy();
 
-      my $tidy_string = $tidy->toString;
+      my $parser = XML::LibXML->new;
+      # Volani toStringC14N zajisti normalizaci namespace, tj. vyhazi
+      # zbytecne opakovane deklarace ktere jsou na zacatku dokumentu a
+      # pak se opakuji u spousty jednotlivych entit. Kodovani je nutno deklarovat
+      # aby to parse_string nasledne dobre nacetlo abylo to v UTF8.
+      my $xml = $parser->parse_string('<?xml version="1.0" encoding="utf-8"?>'."\n".$doc->toStringC14N);
+
+      # Volani toString(1) zajisti pretyPrint XML, tak aby jednotlivy
+      # elementy byly pekne odsazeny. Prekvapive vystup neni validni
+      # utf8 string, takze je potreba volat utf8:decode aby se to
+      # nasledne dobre ulozilo na disk, mozna kdyz by se odstranil ten
+      # binmode tak by to nebylo nutny.
+      my $tidy_string = $xml->toString(1);
+      utf8::decode($tidy_string);
+
       my ($res, $msg, $dom) = checkXMLValidity($tidy_string, 'emd2/schema/eduidmd.xsd');
 
       if ($res) {
@@ -586,7 +614,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 	    my $cmd = sprintf($sign_cmd, $f, $config->output_dir.'/'.$pref.$key);
 	    logger(LOG_DEBUG,  "Signing: '$cmd'");
 	    my $cmd_fh;
-	    open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $!");
+	    open(CMD, "$cmd 2>&1 |") or local_die("Failed to exec $cmd: $! $@");
 	    my @cmd_out = <CMD>;
 	    close(CMD);
 	    my $ret = $? >> 8;
