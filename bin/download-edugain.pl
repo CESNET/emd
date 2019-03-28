@@ -15,8 +15,19 @@ use File::Temp qw(tempfile);
 use File::Touch;
 use Git::Repository;
 use utf8;
+use open ':encoding(UTF-8)';
 
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
+
+sub entityID2fname {
+    my $id = shift;
+
+    $id =~ s/http(|s):\/\///;
+    $id =~ s/\/$//g;
+    $id =~ s/\//%2F/g;
+
+    return $id;
+};
 
 sub load_ignore_list {
   my $file = shift;
@@ -85,6 +96,7 @@ my $config = AppConfig->new
    metadata_url          => { DEFAULT => undef },
    saml2_metadata_schema => { DEFAULT => undef },
    signing_cert          => { DEFAULT => undef },
+   commit_log            => { DEFAULT => '/tmp/download-edugain.log' },
   );
 
 $config->args(\@ARGV) or
@@ -118,7 +130,10 @@ if ($response->is_success) {
     # docela hloupe, ale mozna lepsi nez validovat neco na disku a pak
     # pracovat s necim jinym v pameti.
     my $metadata = $response->content;
-    utf8::decode($metadata);
+
+    # LWP doda data jako serii bajtu nikoli UTF8 string
+    utf8::decode($metadata) unless utf8::is_utf8($metadata);
+
     if (store_to_file($config->metadata_file, $metadata)==0) {
       touch($config->metadata_file);
       logger(LOG_INFO, sprintf('Nothing new. Terminating.'));
@@ -142,7 +157,6 @@ open(F, '<'.$config->metadata_file) or do {
 			  $config->metadata_file, $!));
   exit 1;
 };
-binmode F, ":utf8";
 my $str = join('', <F>);
 close(F);
 
@@ -204,7 +218,9 @@ foreach my $ignore_list (map { $str=$_; $str =~ s/^ //; $str =~ s/ $//; $str; }
 };
 
 my $update = 0;
+my @git_log;
 my @add;
+my @updated;
 my %eduGain;
 foreach my $ed ($doc->getElementsByTagNameNS($md_ns, 'EntityDescriptor')) {
   my $entityID = $ed->getAttribute('entityID');
@@ -212,10 +228,7 @@ foreach my $ed ($doc->getElementsByTagNameNS($md_ns, 'EntityDescriptor')) {
   #$ed->removeAttribute('cacheDuration') if $ed->hasAttribute('cacheDuration');
   #$ed->removeAttribute('validUntil') if $ed->hasAttribute('validUntil');
 
-  my $id = $entityID;
-  $id =~ s/http(|s):\/\///;
-  $id =~ s/\/$//g;
-  $id =~ s/\//%2F/g;
+  my $id = entityID2fname($entityID);
 
   if (exists $ignore_entityID{$entityID}) {
     logger(LOG_INFO, "Entity $entityID is on ignore_list: skipping.");
@@ -225,6 +238,7 @@ foreach my $ed ($doc->getElementsByTagNameNS($md_ns, 'EntityDescriptor')) {
   my $dom = XML::LibXML::Document->new('1.0', 'utf-8');
   $dom->setDocumentElement($ed);
   my $eds = $dom->toString;
+  utf8::decode($eds) unless utf8::is_utf8($eds);
 
   $eduGain{$entityID}++;
   my $file = $config->metadata_dir."/$id.xml";
@@ -233,6 +247,8 @@ foreach my $ed ($doc->getElementsByTagNameNS($md_ns, 'EntityDescriptor')) {
   if ($stf == 1) {
     $update++;
     logger(LOG_INFO, "Entity $entityID was changed -> updated $file.");
+    push @git_log, "u $file";
+    push @updated, $file;
   } elsif ($stf == 2) {
     $update++;
     push @add, $file;
@@ -242,12 +258,41 @@ foreach my $ed ($doc->getElementsByTagNameNS($md_ns, 'EntityDescriptor')) {
   };
 };
 
+# zkontrolovat jestli se nam v adresari s metadaty nevali nejaky
+# zastaraly entity
+opendir(my $dh, $config->metadata_dir) || die "Can't opendir ".$config->metadata_dir.": $!";
+my @files = grep { /\.xml$/ && -f $config->metadata_dir."/$_" } readdir($dh);
+my %files = map { $_ => 1 } @files;
+foreach my $entityID (keys %eduGain) {
+    my $f = entityID2fname($entityID).'.xml';
+    if (exists($files{$f})) {
+	delete $files{$f};
+    };
+};
+closedir $dh;
+
 my $eduGain = join("\n", sort keys %eduGain);
 $update++ if (store_to_file($config->metadata_dir."/edugain.tag", $eduGain));
 
 my $r = Git::Repository->new(work_tree => $config->metadata_dir,
 			     {quiet => 1}
     );
+
+if (keys %files) {
+    foreach my $file (keys %files) {
+	$r->run('rm' => $file);
+	my $ret = $? >> 8;
+	if ($ret > 0) {
+	    logger(LOG_ERR, "git rm $file terminated with error_code=$ret");
+	    exit 1;
+	} else {
+	    logger(LOG_ERR, "git rm $file OK");
+	    push @git_log, "d $file";
+	};
+    };
+
+    $update++;
+};
 
 if (@add) {
     foreach my $file (@add) {
@@ -258,6 +303,7 @@ if (@add) {
 	    exit 1;
 	} else {
 	    logger(LOG_ERR, "git add $file OK");
+	    push @git_log, "a $file";
 	};
     };
 
@@ -265,10 +311,19 @@ if (@add) {
 };
 
 if ($update) {
-    $r->run('commit' => '-a', '-m', 'Automatic update by '.prg_name);
+    my $first_line = 'updated '.scalar(@updated).'; added '.scalar(@add).'; removed '.scalar(keys %files).' by '.prg_name;
+    my $mdir_reg = $config->metadata_dir.'(/|)';
+    logger(LOG_INFO, $first_line);
+    open(COMMIT_LOG, ">".$config->commit_log);
+    print COMMIT_LOG $first_line."\n";
+    print COMMIT_LOG join("\n",
+			  map { $_ =~ s,$mdir_reg,,; $_; } @git_log)."\n";
+    close(COMMIT_LOG);
+    $r->run('commit' => '-a', '-F', $config->commit_log);
     my $ret = $? >> 8;
+    unlink($config->commit_log);
     if ($ret > 0) {
-	logger(LOG_INFO, "git commit terminated with error_coce=$ret");
+	logger(LOG_INFO, "git commit terminated with error_code=$ret");
 	exit 1;
     } else {
 	logger(LOG_INFO, "sucessfull commit");

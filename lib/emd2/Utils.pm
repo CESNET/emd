@@ -10,12 +10,17 @@ use File::Temp qw(tempfile);
 use Digest::MD5 qw (md5_hex md5_base64);
 use XML::LibXML;
 use Data::Dumper;
+use utf8;
+
+my $prg_name = $0;
+$prg_name =~ s/.*\///;
 
 @ISA = qw(Exporter);
 $VERSION = "0.0.1";
 %EXPORT_TAGS = (
                 all => [qw(getNormalizedEntityID getXMLelementAStext ew2string
-			   logger local_die startRun stopRun store_to_file prg_name xml_strip_whitespace)]
+			   logger local_die startRun stopRun store_to_file
+                           prg_name xml_strip_whitespace)]
                 );
 # Add Everything in %EXPORT_TAGS to @EXPORT_OK
 Exporter::export_ok_tags('all');
@@ -66,11 +71,14 @@ sub ew2string {
   return $str;
 };
 
-my $prg_name = $0;
-$prg_name =~ s/.*\///;
-
 sub prg_name {
-  return $prg_name;
+    my $arg = shift;
+
+    if (defined($arg)) {
+	$prg_name = $arg
+    };
+
+    return $prg_name;
 };
 
 sub syslog_escape {
@@ -173,8 +181,6 @@ sub store_to_file {
     # Soubor neexistuje
     $res = 2;
   };
-
-  utf8::decode($content);
 
   my ($tmp_fh, $tmp_filename) = tempfile("/tmp/emd-utils`-XXXXXX");
   binmode $tmp_fh, ":utf8";

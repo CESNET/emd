@@ -32,7 +32,7 @@ startRun($config->cfg);
 my $r = Git::Repository->new(work_tree => $config->git_repository,
 			     {quiet => 1});
 my $output = $r->run('fetch');
-$output = $r->run('log', 'HEAD..origin');
+$output = $r->run('log', 'HEAD..origin/master');
 
 if ($output ne '') {
     my @output = split("\n", $output);

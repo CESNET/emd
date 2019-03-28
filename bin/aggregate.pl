@@ -9,7 +9,7 @@ use Date::Manip;
 use XML::LibXML;
 use Sys::Syslog qw(:standard :macros);
 use AppConfig qw(:expand);
-use emd2::Utils qw (logger local_die startRun stopRun xml_strip_whitespace);
+use emd2::Utils qw (logger prg_name local_die startRun stopRun xml_strip_whitespace);
 use emd2::Checker qw (checkXMLValidity);
 use Proc::ProcessTable;
 use Number::Bytes::Human qw(format_bytes);
@@ -290,6 +290,7 @@ sub load {
   # zlikvidovat z eduid2edugain ty co nejsou v eduid ... tohle je stupidni
   foreach my $entityID (keys %md) {
     my @tags = @{$md{$entityID}->{tags}};
+
     my @ex_tags = grep {$_ ne 'eduid2edugain'} @tags;
     if ((scalar(@tags) > scalar(@ex_tags)) and
 	not (grep {$_ eq 'eduid'} @ex_tags)) {
@@ -536,6 +537,10 @@ $config->args(\@ARGV) or
 $config->file($config->cfg) or
   die "Can't open config file \"".$config->cfg."\": $!";
 
+my $name = $config->cfg;
+$name =~ s/^.*\///;
+$name =~ s/\.cfg$//g;
+prg_name($name);
 startRun($config->cfg);
 
 my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
@@ -545,6 +550,8 @@ my $md = load($config->metadata_dir);
 load_registrationInstant($config->metadata_dir, $md);
 
 foreach my $fed_id (split(/ *, */, $config->federations)) {
+  prg_name('aggregate-'.$fed_id);
+
   my $fed_filters = $fed_id.'_filters';
   my $fed_name = $fed_id.'_name';
 
@@ -598,7 +605,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
       # nasledne dobre ulozilo na disk, mozna kdyz by se odstranil ten
       # binmode tak by to nebylo nutny.
       my $tidy_string = $xml->toString(1);
-      utf8::decode($tidy_string);
+      utf8::decode($tidy_string) unless utf8::is_utf8($tidy_string);
 
       my ($res, $msg, $dom) = checkXMLValidity($tidy_string, 'emd2/schema/eduidmd.xsd');
 
@@ -610,7 +617,10 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 	print F $tidy_string;
 	close(F);
 	
-	foreach my $sign_cmd ($config->sign_cmd, $config->sign256_cmd) {
+	foreach my $sign_cmd (
+                               # $config->sign_cmd, - tohle na novym mdx uz nechceme
+	                       $config->sign256_cmd
+	    ) {
 	    my $cmd = sprintf($sign_cmd, $f, $config->output_dir.'/'.$pref.$key);
 	    logger(LOG_DEBUG,  "Signing: '$cmd'");
 	    my $cmd_fh;
