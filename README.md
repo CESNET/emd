@@ -19,3 +19,9 @@ Skript dále zajištuje plnění atributu cesnetCustomerAffiliation pro jednotli
 
 ## resign-download.sh
 [resign-download.sh](bin/resign-download.sh) stahování a přepodepisování metadat z jaggeru.
+
+## XmlSigner
+Certifikát používaný pro podpisy metadat v eduID.cz je uložený v HSM, podpis realizujeme pomocí vlastní utility [XmlSigner](https://github.com/CESNET/XmlSigner).
+
+## check_metadata
+Používáme plugin [check_metadata](https://github.com/CESNET/check_metadata) pro nagios/icingu určený ke kontrole platnosti podpisu a platnosti metadat.
