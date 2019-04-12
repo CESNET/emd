@@ -29,8 +29,7 @@ do
   then
     wget $SRC_MD -q -O $MD_UNSIGNED
 
-    #/bin/java -jar /opt/signer-sha2/XmlSigner.jar -cfg /opt/signer-sha2/param.ini -alg sha256 -i $MD_UNSIGNED -o $MD_SIGNED 2>/dev/null
-    cp $MD_UNSIGNED $MD_SIGNED
+    /usr/bin/java -jar /opt/signer/XmlSigner.jar -cfg /etc/signer/signer.cfg -i $MD_UNSIGNED -o $MD_SIGNED 2>/dev/null
   else
     true
   fi
