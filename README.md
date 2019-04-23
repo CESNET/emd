@@ -6,8 +6,42 @@
 ## git-check.pl
 [Kontrolovátko GIT](bin/git-check.pl) které se pravidelně spouští z cronu, kontroluje lokální a vzdálený GIT repositář s metadaty. Pokud je k dispozici nějaká novinka, tak aktualizuje a spouští [aggregator](bin/aggregate.pl).
 
+Příklad konfigurace (git-check-eduid.cfg):
+```
+git_repository=/home/mdx/eduid-metadata
+aggregate=1
+aggregate_cmd='/usr/bin/perl /home/mdx/emd2/bin/aggregate.pl --cfg /home/mdx/aggregate-eduid.cfg'
+```
+Použití: ``/home/mdx/emd2/bin/git-check.pl --cfg /home/mdx/git-check-eduid.cfg``
+
 ## aggregate.pl
-[Aggregátor metadat](bin/aggregate.pl) slouží ke spojení jednotlivých entityDescriptorů z souborů v GIT do metadat federace na základě různých tagů. Zajištuje také volání podpisovače (TODO, do gitu!). Volání je zaštováno z [Kontrolovátka GIT](bin/git-check.pl) a o půlnoci je vynucen podpis cronem.
+[Aggregátor metadat](bin/aggregate.pl) slouží ke spojení jednotlivých entityDescriptorů z souborů v GIT do metadat federace na základě různých tagů. Zajištuje také volání podpisovače (XmlSigner viz níže). Volání je zaštováno z [Kontrolovátka GIT](bin/git-check.pl) a o půlnoci je vynucen podpis cronem.
+
+Příklad konfigurace (aggregate-eduid.cfg):
+```
+metadata_dir = '/home/mdx/eduid-metadata'
+output_dir = '/var/www/md'
+sign256_cmd = '/usr/bin/java -jar /opt/signer/XmlSigner.jar -cfg /etc/signer/signer.cfg -i %s -o %s'
+federations = eduid, cesnet_int, hostel, eduid2edugain, aa.cesnet.cz
+validity = '27 days'
+
+[eduid]
+filters = eduid, eduid+idp, eduid+sp, eduid+idp+library, eduid+idp+university, eduid+idp+avcr, eduid+idp+hospital, eduid+idp+cesnet, eduid+idp+other
+name = https://eduid.cz/metadata
+
+[cesnet_int]
+filters = cesnet-int, cesnet-int+idp, cesnet-int+sp
+name = https://cesnet-int.cesnet.cz/metadata
+
+[hostel]
+filters = hostel
+name = https://hostel.eduid.cz/metadata
+
+[eduid2edugain]
+filters = eduid2edugain
+name = eduid.cz-edugain
+```
+Použití: ``/home/mdx/emd2/bin/aggregate.pl --cfg /home/mdx/aggregate-eduid.cfg``
 
 ## download-edugain.pl
 [Stahovač a kouskovač eduGAINu](bin/download-edugain.pl) stahuje oficiální metadata eduGAINu, validuje je, kouskuje na jednotlivé soubory a ukládá do GIT projektu edugain pro [Aggregátor metadat](bin/aggregate.pl). Pravidelně se pouští z cronu.
