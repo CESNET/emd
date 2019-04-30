@@ -315,7 +315,7 @@ if ($update) {
     my $mdir_reg = $config->metadata_dir.'(/|)';
     logger(LOG_INFO, $first_line);
     open(COMMIT_LOG, ">".$config->commit_log);
-    print COMMIT_LOG $first_line."\n";
+    print COMMIT_LOG $first_line."\n\n";
     print COMMIT_LOG join("\n",
 			  map { $_ =~ s,$mdir_reg,,; $_; } @git_log)."\n";
     close(COMMIT_LOG);
