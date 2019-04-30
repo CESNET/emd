@@ -49,7 +49,6 @@ my $mdrpi_ns = 'urn:oasis:names:tc:SAML:metadata:rpi';
 my $mdui_ns = 'urn:oasis:names:tc:SAML:metadata:ui';
 my $mdeduid_ns = 'http://eduid.cz/schema/metadata/1.0';
 
-my $clarin_tag = 'http://eduid.cz/uri/sp-group/clarin';
 my $mefanet_tag = 'http://eduid.cz/uri/group/mefanet';
 my $mojeid_edu_tag = 'http://eduid.cz/uri/sp-group/mojeid-edu';
 
@@ -114,18 +113,11 @@ sub tidyEntityDescriptor {
     logger(LOG_INFO, "Removed ".$element->nodeName." from metadata of $entityID.");
   };
 
-  # Semik: 3. 4. 2014 - odstraneni skupiny SP clarin - tohle ridime pomoci clarin_sp.tag
-
   foreach my $element ($node->getElementsByTagNameNS($saml20asrt_ns, 'AttributeValue')) {
       my $parent = $element->parentNode;
       my $textContent = $element->textContent;
       my $removed = 0;
 
-      if($textContent =~ m,$clarin_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
       if($textContent =~ m,$mefanet_tag,) {
 	  $parent->removeChild($element);
 	  $removed++;
@@ -446,12 +438,6 @@ sub tag_entity {
     $ext = $ext[0];
   };
 
-  #<EntityAttributes xmlns="urn:oasis:names:tc:SAML:metadata:attribute">
-  #    <Attribute xmlns="urn:oasis:names:tc:SAML:2.0:assertion" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri" Name="http://macedir.org/entity-category">
-  #        <AttributeValue>http://eduid.cz/uri/sp-group/clarin</AttributeValue>
-  #    </Attribute>
-  #</EntityAttributes>
-
   # najit ci vytvorit vlozit EntityAttribute
   my @ea = $ext->getChildrenByTagNameNS($saml20attr_ns, 'EntityAttributes');
   my $ea;
@@ -516,7 +502,6 @@ sub aggregate {
   foreach my $entityID (sort keys %{$md}) {
     my $entity = $md->{$entityID}->{md}->cloneNode(1);
     eduGAIN_entity($entity, $md->{$entityID}->{registrationInstant}) if ($name eq 'eduid.cz-edugain');
-    tag_entity($entity, $clarin_tag) if (grep {$_ eq 'clarin_sp'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $mefanet_tag) if (grep {$_ eq 'mefanet_sp'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $mojeid_edu_tag) if (grep {$_ eq 'mojeid-edu'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $library_tag) if (grep {$_ eq 'library'} @{$md->{$entityID}->{tags}});
