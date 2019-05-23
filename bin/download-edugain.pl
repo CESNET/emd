@@ -14,6 +14,8 @@ use Date::Format;
 use File::Temp qw(tempfile);
 use File::Touch;
 use Git::Repository;
+use Net::SSL;
+use IO::Socket::SSL;
 use utf8;
 use open ':encoding(UTF-8)';
 
@@ -114,7 +116,12 @@ my $request = HTTP::Request->new('GET', $config->metadata_url);
 #  warn $ims;
 #  $request->header('If-Modified-Since', $ims);
 #};
-my $ua = LWP::UserAgent->new;
+# debugovani SSL:
+#   perl -MIO::Socket::SSL=debug4 ...
+my $ua = LWP::UserAgent->new(
+		             ssl_opts => { verify_hostname => 1,
+					   SSL_ca_path => '/etc/ssl/certs' }
+);
 my $response = $ua->request($request);
 
 logger(LOG_INFO, sprintf('Metadata download %s: %s',
