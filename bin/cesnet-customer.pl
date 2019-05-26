@@ -166,6 +166,7 @@ close $fh;
 
 my $root = $xml->documentElement;
 
+my @entityIDs;
 my @missing;
 my @problems;
 my @zakaznici;
@@ -173,13 +174,15 @@ my @ostatni;
 my @clenove;
 my $now = time;
 my $total = 0;
-# projet entity ID jestli je zname
+
+# projet entity ID ve federaci jestli je zname
 foreach my $entity (@{$root->getElementsByTagNameNS($saml20_ns, 'EntityDescriptor')}) {
     # overit ze se jedna o IdP, tj. ma
     next unless @{$entity->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor')};
 
     $total++;
     my $entityID = $entity->getAttribute('entityID');
+    push @entityIDs, $entityID;
 
     my $sres = $conn->search($config->eduIDOrgBase,
 			     LDAP_SCOPE_ONE,
@@ -230,10 +233,25 @@ entityidofidp: $entityID\n\n";
     };
 };
 
+# projet entityID v LDAPu jestli se nam tam neflaka neco co uz nepotrebujeme
+my @extra;
+my $filter = '(!(|'.join('', map { "(entityIDofIdP=$_)"} @entityIDs).'))';
+my $sres = $conn->search($config->eduIDOrgBase,
+			 LDAP_SCOPE_ONE,
+			 $filter)
+    or die "Can't search: ".$conn->errorMessage;
+while (my $entity = $sres->nextEntry) {
+    my $dc = $entity->getValues('dc')->[0];
+    my $entityID = $entity->getValues('entityIDofIdP')->[0];
+
+    push @extra, "$entityID (dc=$dc)";
+};
+
 if ($config->showStats) {
     print("Subject: [eduID.cz #267261] monthly eduID.cz IdP review\n\n");
     printf("Total known entities: %d, customers: %d (members: %d), other: %d
-Unknown entities: ".scalar(@missing)."\n\n",
+Entities not registered in LDAP: ".scalar(@missing)."
+Entities orphaned in LDAP: ".scalar(@extra)."\n\n",
 	   $total, scalar(@zakaznici), scalar(@clenove), scalar(@ostatni));
     print("List of CESNET customers and members (".scalar(@zakaznici)."):\n",
 	  join("\n", sort map { "    $_"} @zakaznici)."\n\n");
@@ -241,9 +259,17 @@ Unknown entities: ".scalar(@missing)."\n\n",
 	  join("\n", sort map { "    $_"} @ostatni)."\n\n"); 
 };
 
-if (@missing) {
+if (scalar(@missing) or scalar(@extra)) {
     print("Subject: [eduID.cz #330914] Pripominka aktualizace ciselniku organizaci v eduID.cz\n");
-    print("Complete following LDIF and submit it into LDAP:
+
+    if (@missing) {
+	print("Complete following LDIF and submit it into LDAP:
 
 ".join('', @missing)."\n");
+    };
+
+    if (@extra) {
+	print("Folowing entityID are not present in ".$config->metadata.":
+".join('', map { "  $_\n" } @extra)."\n");
+    };
 };
