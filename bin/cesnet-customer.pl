@@ -209,17 +209,35 @@ entityidofidp: $entityID\n\n";
 	if ($clen =~ /TRUE/i) {
 	    push @clenove, "$o ($entityID)";
 	};
-	my $bzakaznik = 0;
+
+	my @services;
+
+	# proverit jestli maji eduroam
+	my $e_res = $conn->search('o=eduroam,o=apps,dc=cesnet,dc=cz',
+				  LDAP_SCOPE_SUBTREE,
+				  '(&(|(eduroamConnectionStatus=in-process)(eduroamConnectionStatus=connected))(oPointer='.$oPointer.'))')
+	    or die "Can't search: ".$conn->errorMessage;
+	push @services, 'eduroam' if $e_res->count;
+
+	# proverit jestli maji TCS
+	my $t_res = $conn->search('ou=Organizations,o=TCS2,o=apps,dc=cesnet,dc=cz',
+				  LDAP_SCOPE_SUBTREE,
+				  '(&(entryStatus=active)(tcs2CesnetOrgDN='.$oPointer.'))')
+	    or die "Can't search: ".$conn->errorMessage;
+	push @services, 'TCS' if $t_res->count;
+
+        my $bzakaznik = 0;
 	if ($zakaznik =~ /TRUE/i) {
 	    $bzakaznik = 1;
-	    my $z = "$o ($entityID)";
-	    $z .= ' MEMBER' if ($clen =~ /TRUE/i);
-	    push @zakaznici, $z;
+	    my $z = "$o ($entityID) ";
+	    push @services, 'CESNET MEMBER' if ($clen =~ /TRUE/i);
+	    push @zakaznici, $z.join(', ', @services);
 	} else {
             my $oo = $o;
 	    $oo = '' unless(defined($o));
-	    push @ostatni, "$oo ($entityID)"
+	    push @ostatni, "$oo ($entityID) ".join(', ', @services);
 	};
+
 	if (update_affiliation($entry, $entity, $bzakaznik)) {
 	    # neco se zmenilo v LDAPu;
 	    if ($conn->update($entry)) {
