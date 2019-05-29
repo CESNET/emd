@@ -53,7 +53,7 @@ my $category2affiation = {
     'http://eduid.cz/uri/idp-group/avcr'       => ['member'],
     'http://eduid.cz/uri/idp-group/library'    => ['employee'],
     'http://eduid.cz/uri/idp-group/hospital'   => ['employee'],
-    'http://eduid.cz/uri/idp-group/other'      => ['employee', 'member'],
+    'http://eduid.cz/uri/idp-group/other'      => ['employee'],
 };
 
 sub update_affiliation {
