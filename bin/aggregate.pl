@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl
+# apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl libnumber-bytes-human-perl libcrypt-openssl-x509-perl
 
 use strict;
 use lib qw(emd2/lib lib);
