@@ -528,6 +528,25 @@ $name =~ s/\.cfg$//g;
 prg_name($name);
 startRun($config->cfg);
 
+# otevrit adresar s metadaty a nacist vsechny konfigy a naplnit
+# promenou federations
+opendir(my $dh, $config->metadata_dir) || die "Can't opendir ".$config->metadata_dir.": $!";
+my @fed_cfg = grep { /\.cfg$/ } readdir($dh);
+closedir $dh;
+
+my @fed;
+foreach my $fed_cfg (@fed_cfg) {
+    my $fed = $fed_cfg;
+    $fed =~ s/\.cfg$//g;
+    push @fed, $fed;
+
+    # nacteni fragmentu konfigurace
+    $fed_cfg = $config->metadata_dir."/$fed_cfg";
+    $config->file($fed_cfg) or die "Can't open config file \"$fed_cfg\": $!";
+    # TODO vzit si casovou znacku posledni modifikace
+};
+$config->set('federations', join(',', @fed));
+
 my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
 
 my $md = load($config->metadata_dir);
@@ -572,8 +591,9 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     };
 
     $export = 1 if ($config->force);
+    my $no_entities = scalar(keys %{$entities});
 
-    if ($export) {
+    if ($export and $no_entities) {
       logger(LOG_DEBUG,  "Exporting $key to file $f.");
       my $doc = aggregate($entities, $config->$fed_name, $validUntil, $key);
 
