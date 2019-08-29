@@ -13,6 +13,7 @@ use emd2::Utils qw (logger prg_name local_die startRun stopRun xml_strip_whitesp
 use emd2::Checker qw (checkXMLValidity);
 use Proc::ProcessTable;
 use Number::Bytes::Human qw(format_bytes);
+use List::Util qw(max);
 use utf8;
 
 my $config = AppConfig->new
@@ -202,6 +203,7 @@ sub load_registrationInstant {
 
 sub load {
   my $dir = shift;
+  my $fed_ts = shift;
   my %md;
 
   opendir(DIR, $dir) || local_die "Can't opendir $dir: $!";
@@ -267,6 +269,13 @@ sub load {
   foreach my $file (grep {$_ =~ /.tag$/} @files) {
     open(F, "$dir/$file") || local_die "Can't read $dir/$file: $!";
     my $tag = $file; $tag =~ s/\.tag$//;
+
+    # vzit si casovou znacku modifikace .tag souboru
+    if (defined $fed_ts) {
+      my @stat = stat("$dir/$file");
+      $fed_ts->{$tag} = max($fed_ts->{$tag} || 0, $stat[9]);
+    };
+
     while (my $line = <F>) {
       chomp($line);
       next if ($line =~ /^#/);
@@ -299,15 +308,20 @@ sub filter {
   my $md = shift;
   my $filter = shift;
   my $or_filter = shift;
+  my $fed_ts = shift;
 
   my $f = join('+', sort @{$filter});
 
   # or filter umoznuje rikat ze chceme entity s tagem hostel a soucasne z federace eduid
   my %or_md;
+  my $mtime = 0;
   if (@{$or_filter}) {
     foreach my $entityID (keys %{$md}) {
       my $or_found = 0;
       foreach my $tag (@{$or_filter}) {
+	if (exists($fed_ts->{$tag})) {
+	  $mtime = max($mtime, $fed_ts->{$tag});
+	};
 	$or_found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
       };
 
@@ -320,11 +334,13 @@ sub filter {
 
   # normalni filter rika ze chceme entity s tagem eduid a idp
   my %md;
-  my $mtime = 0;
   foreach my $entityID (keys %{$md}) {
     my $found = 0;
     my $or_found = 0;
     foreach my $tag (@{$filter}) {
+      if (exists($fed_ts->{$tag})) {
+	$mtime = max($mtime, $fed_ts->{$tag});
+      };
       $found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
       $or_found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
     };
@@ -333,7 +349,7 @@ sub filter {
 
     if ($found == @{$filter}) {
       $md{$entityID} = $md->{$entityID};
-      $mtime = $md->{$entityID}->{mtime} if ($md->{$entityID}->{mtime} > $mtime);
+      $mtime = max($mtime, $md->{$entityID}->{mtime} || 0);
     };
   };
 
@@ -534,6 +550,7 @@ opendir(my $dh, $config->metadata_dir) || die "Can't opendir ".$config->metadata
 my @fed_cfg = grep { /\.cfg$/ } readdir($dh);
 closedir $dh;
 
+my %fed_ts;
 my @fed;
 foreach my $fed_cfg (@fed_cfg) {
     my $fed = $fed_cfg;
@@ -543,13 +560,16 @@ foreach my $fed_cfg (@fed_cfg) {
     # nacteni fragmentu konfigurace
     $fed_cfg = $config->metadata_dir."/$fed_cfg";
     $config->file($fed_cfg) or die "Can't open config file \"$fed_cfg\": $!";
-    # TODO vzit si casovou znacku posledni modifikace
+
+    # vzit si casovou znacku posledni modifikace
+    my @stat = stat($fed_cfg);
+    $fed_ts{$fed} = $stat[9];
 };
 $config->set('federations', join(',', @fed));
 
 my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
 
-my $md = load($config->metadata_dir);
+my $md = load($config->metadata_dir, \%fed_ts);
 
 load_registrationInstant($config->metadata_dir, $md);
 
@@ -572,7 +592,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     if ($config->varlist('^'.$or_tags_name.'$')) {
       @or_tags = (split(/ *, */, $config->$or_tags_name));
     };
-    my ($entities, $mtime) = filter($md, [split(/\+/, $key)], \@or_tags);
+    my ($entities, $mtime) = filter($md, [split(/\+/, $key)], \@or_tags, \%fed_ts);
 
     my $pref = '';
     $pref = $fed_id.'+' if ($config->varlist('^'.$or_tags_name.'$'));
@@ -621,7 +641,6 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 	binmode F, ":utf8";
 	print F $tidy_string;
 	close(F);
-	
 	foreach my $sign_cmd (
                                # $config->sign_cmd, - tohle na novym mdx uz nechceme
 	                       $config->sign256_cmd
