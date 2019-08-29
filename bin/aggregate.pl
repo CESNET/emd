@@ -573,6 +573,8 @@ my $md = load($config->metadata_dir, \%fed_ts);
 
 load_registrationInstant($config->metadata_dir, $md);
 
+my $exported_something = 0;
+
 foreach my $fed_id (split(/ *, */, $config->federations)) {
   prg_name('aggregate-'.$fed_id);
 
@@ -614,6 +616,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     my $no_entities = scalar(keys %{$entities});
 
     if ($export and $no_entities) {
+      $exported_something++;
       logger(LOG_DEBUG,  "Exporting $key to file $f.");
       my $doc = aggregate($entities, $config->$fed_name, $validUntil, $key);
 
@@ -673,5 +676,35 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     };
   };
 };
+
+# zkontrolovat vystupni adresar jestli se tam nevali neaktualni
+# bordel, pokud se neco exportovalo, at v tech logach neopruzjeme
+# furt. Skript by se pro jistotu mel volat 1x denne s --force=1 aby se
+# zajistilo prepodepsani metadat.
+if ($exported_something) {
+  opendir($dh, $config->output_dir) || die "Can't opendir ".$config->output_dir.": $!";
+  my @output = grep { -f $config->output_dir."/$_" } readdir($dh);
+  closedir $dh;
+
+  # v konfigu mame platnost ve formatu Date::Manip, konretne testuji s
+  # "27 days" doufam tedy ze pripadne zmeny budou take kompatibilni s
+  # prilepenim ' ago' a spocitani casu v minulosti
+
+  my $too_old = UnixDate($config->validity.' ago', '%s');
+
+  foreach my $out (@output) {
+    $out = $config->output_dir."/$out";
+
+    # perli stat deferencuje, takze pokud bude v andresari link, tak
+    # stat vrati mtime cile
+    my @stat = stat($out);
+
+    if ($stat[9] < $too_old) {
+      my $age_d = sprintf("%d", (time-$stat[9])/(60*60*24));
+      logger(LOG_ERR, "File $out is too old ($age_d days) and should be removed.");
+    };
+  };
+};
+
 
 stopRun($config->cfg);
