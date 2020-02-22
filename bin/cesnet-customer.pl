@@ -135,6 +135,29 @@ sub update_affiliation {
     return $entry->isModified;
 };
 
+# <EntityDescriptor xmlns:shibmd="urn:mace:shibboleth:metadata:1.0" entityID="https://whoami-dev.cesnet.cz/idp/shibboleth">
+#   <Extensions>
+#     <mdattr:EntityAttributes>
+#     ...
+#       <saml:Attribute Name="http://macedir.org/entity-category" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+#         <saml:AttributeValue>http://refeds.org/category/hide-from-discovery</saml:AttributeValue>
+#         <saml:AttributeValue>http://eduid.cz/uri/idp-group/other</saml:AttributeValue>
+#     </saml:Attribute>
+
+sub hideFromDiscovery {
+    my $entity = shift;
+
+    foreach my $element (@{$entity->getElementsByTagNameNS($saml20asrt_ns, 'AttributeValue')}) {
+	my $val = $element->textContent;
+	$val =~ s/^\s+//g;
+	$val =~ s/\s+$//g;
+
+	return 1 if ($val eq 'http://refeds.org/category/hide-from-discovery');
+    };
+
+    return 0;
+};
+
 $config->args(\@ARGV) or
     die "Can't parse cmdline args";
 $config->file($config->cfg) or
@@ -179,6 +202,8 @@ my $total = 0;
 foreach my $entity (@{$root->getElementsByTagNameNS($saml20_ns, 'EntityDescriptor')}) {
     # overit ze se jedna o IdP, tj. ma
     next unless @{$entity->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor')};
+    # pokud je oznacena jako hide from discovery tak se ji nebudeme zabyvat
+    next if hideFromDiscovery($entity);
 
     $total++;
     my $entityID = $entity->getAttribute('entityID');
