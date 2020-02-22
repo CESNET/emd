@@ -14,6 +14,7 @@ use myPerlLDAP::conn;
 use myPerlLDAP::entry;
 use myPerlLDAP::attribute;
 use myPerlLDAP::utils qw(:all);
+use JSON;
 
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
 my $saml20attr_ns = 'urn:oasis:names:tc:SAML:metadata:attribute';
@@ -197,6 +198,7 @@ my @ostatni;
 my @clenove;
 my $now = time;
 my $total = 0;
+my @komoraExport;
 
 # projet entity ID ve federaci jestli je zname
 foreach my $entity (@{$root->getElementsByTagNameNS($saml20_ns, 'EntityDescriptor')}) {
@@ -231,6 +233,16 @@ entityidofidp: $entityID\n\n";
 	my $zakaznik = $orgEntry->getValues('cesnetActive')->[0] || 'FALSE';
 	my $clen = $orgEntry->getValues('cesnetMember')->[0] || 'FALSE';
 	my $o = $orgEntry->getValues('o', 'lang-cs')->[0];
+
+	my %komoraExport = (
+	    entityID => $entityID,
+	    organizace => $o,
+	    ldapID => $orgEntry->getValues('dc')->[0],
+	    abraCustomerId => $orgEntry->getValues('cesnetAbraOrgID')->[0] || undef,
+	    clientId => $orgEntry->getValues('cesnetOrgID')->[0] || undef,
+	    );
+	push @komoraExport, \%komoraExport;
+
 	if ($clen =~ /TRUE/i) {
 	    push @clenove, "$o ($entityID)";
 	};
@@ -275,6 +287,13 @@ entityidofidp: $entityID\n\n";
 	push @problems, "Multiple records for $entityID in baseDN=".$config->eduIDOrgBase."\n";
     };
 };
+
+# vyexportovat data pro komoru
+open(KOMORA, ">".$config->komoraExport)
+    or local_die("Can't write into: ".$config->komoraExport);
+my $json_str = JSON->new->pretty->encode(\@komoraExport);
+print KOMORA $json_str;
+close KOMORA;
 
 # projet entityID v LDAPu jestli se nam tam neflaka neco co uz nepotrebujeme
 my @extra;
