@@ -1,4 +1,4 @@
-#!/bin/perl -w
+#!/usr/bin/perl -w
 
 use strict;
 use AppConfig qw(:expand);
@@ -77,6 +77,8 @@ my $config = AppConfig->new
 $config->args(\@ARGV) or die "Can't parse cmdline args";
 $config->file($config->CFGFilename) or die "Can't open config file \"".$config->CFGFilename."\": $!";
 
+#die 'curl -X POST "'.getAPIURL($config).'" -H "accept: application/json" -H "Content-Type: multipart/form-data" -F "dataFile=@eduid-idp.json;type=application/json"'."\n";
+
 my $url = getAPIURL($config);
 my $ua = LWP::UserAgent->new(ssl_opts => { verify_hostname => 1 });
 
@@ -103,7 +105,3 @@ if ($jres->{ok}) {
 };
 
 local_die("Upload to komora failed: ".$req->decoded_content);
-
-__END__
-
-#print 'curl -X POST "'.getAPIURL($config).'" -H "accept: application/json" -H "Content-Type: multipart/form-data" -F "dataFile=@eduid-idp.json;type=application/json"'."\n";
