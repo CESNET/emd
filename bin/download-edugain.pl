@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+# dep: libfile-touch-perl libgit-repository-perl
+
 use strict;
 use lib qw(emd2/lib lib);
 use Data::Dumper;
@@ -81,6 +83,29 @@ sub verify_signature {
 
 return;
 
+};
+
+sub filter_AttributeConsumingService {
+  my $entityID = shift;
+  my $entity = shift;
+
+  my $known_rq = {};
+  my $modified = 0;
+
+  foreach my $acs (@{$entity->getElementsByTagNameNS($saml20_ns, 'AttributeConsumingService')}) {
+    foreach my $rq (@{$entity->getElementsByTagNameNS($saml20_ns, 'RequestedAttribute')}) {
+      my $name = $rq->getAttribute('Name');
+      if (exists $known_rq->{$name}) {
+	$modified++;
+	$acs->removeChild($rq);
+	logger(LOG_INFO, "Entity $entityID has duplicate AttributeConsumingService/RequestedAttribute[\@Name=$name], removed.");
+      } else {
+	$known_rq->{$name}++;
+      }
+    };
+  };
+
+  return $modified;
 };
 
 startRun;
@@ -236,6 +261,8 @@ foreach my $ed ($doc->getElementsByTagNameNS($md_ns, 'EntityDescriptor')) {
   #$ed->removeAttribute('validUntil') if $ed->hasAttribute('validUntil');
 
   my $id = entityID2fname($entityID);
+
+  filter_AttributeConsumingService($entityID, $ed);
 
   if (exists $ignore_entityID{$entityID}) {
     logger(LOG_INFO, "Entity $entityID is on ignore_list: skipping.");
