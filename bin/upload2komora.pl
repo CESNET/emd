@@ -100,7 +100,11 @@ local_die("Upload to komora failed: $@; ".$req->decoded_content)
     if ($@);
 
 if ($jres->{ok}) {
-    logger(LOG_DEBUG, "komora upload OK, stored as recordId=".$jres->{recordId});
+    my $id = 'undef';
+    $id = $jres->{recordId} if (exists($jres->{recordId}));
+    $id = $jres->{tempFileName} if (exists($jres->{tempFileName}));
+
+    logger(LOG_DEBUG, "komora upload OK, stored as recordId=$id");
     exit 0;
 };
 
