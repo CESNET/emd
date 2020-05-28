@@ -164,11 +164,11 @@ $config->args(\@ARGV) or
 $config->file($config->cfg) or
     die "Can't open config file \"".$config->cfg."\": $!";
 
-my $conn = new myPerlLDAP::conn({"host"   => $config->LDAPServer,
-                                 "port"   => $config->LDAPServerPort,
-                                 "bind"   => $config->BindDN,
-                                 "pswd"   => $config->BindPassword,
-                                 "certdb" => $config->UseSSL}) or
+my $conn = construct myPerlLDAP::conn({"host"   => $config->LDAPServer,
+				       "port"   => $config->LDAPServerPort,
+				       "bind"   => $config->BindDN,
+				       "pswd"   => $config->BindPassword,
+				       "certdb" => $config->UseSSL}) or
     local_die "Can't create myPerlLDAP::conn object";
 $conn->init or
     local_die "Can't open LDAP connection to ".$config->LDAPServer.":".$config->LDAPServerPort.": ".$conn->errorMessage;
