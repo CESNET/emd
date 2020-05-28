@@ -335,3 +335,5 @@ if (scalar(@missing) or scalar(@extra)) {
 ".join('', map { "  $_\n" } @extra)."\n");
     };
 };
+
+$conn->close;
