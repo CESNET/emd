@@ -19,6 +19,7 @@ use JSON;
 my $saml20_ns = 'urn:oasis:names:tc:SAML:2.0:metadata';
 my $saml20attr_ns = 'urn:oasis:names:tc:SAML:metadata:attribute';
 my $saml20asrt_ns = 'urn:oasis:names:tc:SAML:2.0:assertion';
+my $saml10 = 'urn:mace:shibboleth:metadata:1.0';
 
 my $config = AppConfig->new
     ({
@@ -55,6 +56,68 @@ my $category2affiation = {
     'http://eduid.cz/uri/idp-group/library'    => ['employee'],
     'http://eduid.cz/uri/idp-group/hospital'   => ['employee'],
     'http://eduid.cz/uri/idp-group/other'      => ['employee'],
+};
+
+sub update_entry_attribute {
+    my $entityID = shift;
+    my $entry = shift;
+    my $attr_name = shift;
+    my $values = shift;
+
+    my $entryDN = $entry->dn;
+
+    my (@add, @del);
+    my $attr = $entry->attr($attr_name);
+    if ((not defined $attr) and (@{$values})) {
+	# entry nema zadny
+	$entry->addValues($attr_name, $values);
+	push @add, @{$values};
+    } else {
+	my @ldap = ();
+	@ldap = @{$attr->getValues} if ($attr);
+
+	# zkontrolovat jestli v LDAPu mame vsechny atributy ktere bych meli mit
+	foreach my $affiliation (@{$values}) {
+	    unless (grep { $_ eq $affiliation } @ldap) {
+		push @add, $affiliation;
+		$entry->addValues($attr_name, $affiliation);
+	    };
+	};
+
+	# zkontrolovat jestli v LDAPu nemame neco navic
+	foreach my $ldap (@ldap) {
+	    unless (grep { $_ eq $ldap} @{$values}) {
+		push @del, $ldap;
+		$entry->removeValues($attr_name, $ldap);
+	    };
+	};
+    };
+
+    if ((@add > 0) or (@del > 0)) {
+	my @log;
+	push @log, map { "+$_"; } @add;
+	push @log, map { "-$_"; } @del;
+	logger(LOG_INFO,
+	       "$entityID ($entryDN): $attr_name: ".join(", ", @log));
+    };
+};
+
+sub update_scope {
+    my $entry = shift;
+    my $entity = shift;
+
+    my $entityID = $entity->getAttribute('entityID');
+
+    my @scope;
+    foreach my $idpsso (@{$entity->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor')}) {
+	foreach my $scope (@{$idpsso->getElementsByTagNameNS($saml10, 'Scope')}) {
+	    push @scope, $scope->textContent;
+	};
+    };
+
+    update_entry_attribute($entityID, $entry, 'eduIDczScope', \@scope);
+
+    return $entry->isModified;
 };
 
 sub update_affiliation {
@@ -98,40 +161,7 @@ sub update_affiliation {
 	logger(LOG_INFO, "$entityID is missing entity category!");
     };
 
-    my (@add, @del);
-    my $cca = $entry->attr('cesnetCustomerAffiliation');
-    if ((not defined $cca) and (@{$affiliations})) {
-	# entry nema zadny
-	$entry->addValues('cesnetCustomerAffiliation', $affiliations);
-	push @add, @{$affiliations};
-    } else {
-	my @ldap = ();
-	@ldap = @{$cca->getValues} if ($cca);
-
-	# zkontrolovat jestli v LDAPu mame vsechny atributy ktere bych meli mit
-	foreach my $affiliation (@{$affiliations}) {
-	    unless (grep { $_ eq $affiliation } @ldap) {
-		push @add, $affiliation;
-		$entry->addValues('cesnetCustomerAffiliation', $affiliation);
-	    };
-	};
-
-	# zkontrolovat jestli v LDAPu nemame neco navic
-	foreach my $ldap (@ldap) {
-	    unless (grep { $_ eq $ldap} @{$affiliations}) {
-		push @del, $ldap;
-		$entry->removeValues('cesnetCustomerAffiliation', $ldap);
-	    };
-	};
-    };
-
-    if ((@add > 0) or (@del > 0)) {
-	my @log;
-	push @log, map { "+$_"; } @add;
-	push @log, map { "-$_"; } @del;
-	logger(LOG_INFO,
-	       "$entityID ($entryDN): cesnetCustomerAffiliation: ".join(", ", @log));
-    };
+    update_entry_attribute($entityID, $entry, 'cesnetCustomerAffiliation', $affiliations);
 
     return $entry->isModified;
 };
@@ -275,7 +305,7 @@ entityidofidp: $entityID\n\n";
 	    push @ostatni, "$oo ($entityID) ".join(', ', @services);
 	};
 
-	if (update_affiliation($entry, $entity, $bzakaznik)) {
+	if (update_affiliation($entry, $entity, $bzakaznik) || update_scope($entry, $entity)) {
 	    # neco se zmenilo v LDAPu;
 	    if ($conn->update($entry)) {
 		logger(LOG_INFO, "$entityID updated");
