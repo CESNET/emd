@@ -189,6 +189,53 @@ sub hideFromDiscovery {
     return 0;
 };
 
+sub getOrgInfo {
+    my $entry = shift;
+    my $conn = $entry->owner;
+
+    my $oPointer = $entry->getValues('oPointer')->[0];
+    my $orgEntry = $conn->read($oPointer) or
+	local_die "Failed to read $oPointer: ".$conn->errorMessage;
+
+    my $zakaznik = $orgEntry->getValues('cesnetActive')->[0] || 'FALSE';
+    my $clen = $orgEntry->getValues('cesnetMember')->[0] || 'FALSE';
+    my $o = $orgEntry->getValues('o', 'lang-cs')->[0] || 'UNDEFINED';
+    my $ldapID = $orgEntry->getValues('dc')->[0] || undef;
+    my $abraCustomerID = $orgEntry->getValues('cesnetAbraOrgID')->[0] || undef;
+    my $clientID = $orgEntry->getValues('cesnetOrgID')->[0] || undef;
+
+    return ($oPointer, $ldapID, $abraCustomerID, $clientID,
+	    $o, $zakaznik, $clen);
+};
+
+sub has_eduroam {
+    my $conn = shift;
+    my $oPointer = shift;
+
+    return unless $oPointer;
+
+    my $e_res = $conn->search('o=eduroam,o=apps,dc=cesnet,dc=cz',
+			      LDAP_SCOPE_SUBTREE,
+			      '(&(|(eduroamConnectionStatus=in-process)(eduroamConnectionStatus=connected))(oPointer='.$oPointer.'))')
+	or die "Can't search: ".$conn->errorMessage;
+
+    return $e_res->count;
+};
+
+sub has_tcs {
+    my $conn = shift;
+    my $oPointer = shift;
+
+    return unless $oPointer;
+
+    my $t_res = $conn->search('ou=Organizations,o=TCS2,o=apps,dc=cesnet,dc=cz',
+			      LDAP_SCOPE_SUBTREE,
+			      '(&(entryStatus=active)(tcs2CesnetOrgDN='.$oPointer.'))')
+	or die "Can't search: ".$conn->errorMessage;
+
+    return $t_res->count;
+};
+
 $config->args(\@ARGV) or
     die "Can't parse cmdline args";
 $config->file($config->cfg) or
@@ -229,6 +276,7 @@ my @clenove;
 my $now = time;
 my $total = 0;
 my @komoraExport;
+my %organizace;
 
 # projet entity ID ve federaci jestli je zname
 foreach my $entity (@{$root->getElementsByTagNameNS($saml20_ns, 'EntityDescriptor')}) {
@@ -257,21 +305,19 @@ entityidofidp: $entityID\n\n";
     } elsif ($sres->count == 1) {
 	# tohle jsme hledali - nic delat nemusime, jen si poznamename statistiky
 	my $entry = $sres->nextEntry;
-	my $oPointer = $entry->getValues('oPointer')->[0];
-	my $orgEntry = $conn->read($oPointer) or
-	    local_die "Failed to read $oPointer: ".$conn->errorMessage;
-	my $zakaznik = $orgEntry->getValues('cesnetActive')->[0] || 'FALSE';
-	my $clen = $orgEntry->getValues('cesnetMember')->[0] || 'FALSE';
-	my $o = $orgEntry->getValues('o', 'lang-cs')->[0];
+
+	my ($oPointer, $ldapID, $abraCustomerID, $clientID,
+	    $o, $zakaznik, $clen) = getOrgInfo($entry);
 
 	my %komoraExport = (
 	    entityID => $entityID,
 	    organizace => $o,
-	    ldapID => $orgEntry->getValues('dc')->[0],
-	    abraCustomerId => $orgEntry->getValues('cesnetAbraOrgID')->[0] || undef,
-	    clientId => $orgEntry->getValues('cesnetOrgID')->[0] || undef,
+	    ldapID => $ldapID,
+	    abraCustomerId => $abraCustomerID,
+	    clientId => $clientID,
 	    );
 	push @komoraExport, \%komoraExport;
+	$organizace{$o}->{$entityID}++;
 
 	if ($clen =~ /TRUE/i) {
 	    push @clenove, "$o ($entityID)";
@@ -280,18 +326,10 @@ entityidofidp: $entityID\n\n";
 	my @services;
 
 	# proverit jestli maji eduroam
-	my $e_res = $conn->search('o=eduroam,o=apps,dc=cesnet,dc=cz',
-				  LDAP_SCOPE_SUBTREE,
-				  '(&(|(eduroamConnectionStatus=in-process)(eduroamConnectionStatus=connected))(oPointer='.$oPointer.'))')
-	    or die "Can't search: ".$conn->errorMessage;
-	push @services, 'eduroam' if $e_res->count;
+	push @services, 'eduroam' if has_eduroam($conn, $oPointer);
 
 	# proverit jestli maji TCS
-	my $t_res = $conn->search('ou=Organizations,o=TCS2,o=apps,dc=cesnet,dc=cz',
-				  LDAP_SCOPE_SUBTREE,
-				  '(&(entryStatus=active)(tcs2CesnetOrgDN='.$oPointer.'))')
-	    or die "Can't search: ".$conn->errorMessage;
-	push @services, 'TCS' if $t_res->count;
+	push @services, 'TCS' if has_tcs($conn, $oPointer);
 
         my $bzakaznik = 0;
 	if ($zakaznik =~ /TRUE/i) {
@@ -318,13 +356,6 @@ entityidofidp: $entityID\n\n";
     };
 };
 
-# vyexportovat data pro komoru
-open(KOMORA, ">".$config->komoraExport)
-    or local_die("Can't write into: ".$config->komoraExport);
-my $json_str = JSON->new->pretty->encode(\@komoraExport);
-print KOMORA $json_str;
-close KOMORA;
-
 # projet entityID v LDAPu jestli se nam tam neflaka neco co uz nepotrebujeme
 my @extra;
 my $filter = '(!(|'.join('', map { "(entityIDofIdP=$_)"} @entityIDs).'))';
@@ -332,26 +363,88 @@ my $sres = $conn->search($config->eduIDOrgBase,
 			 LDAP_SCOPE_ONE,
 			 $filter)
     or die "Can't search: ".$conn->errorMessage;
+
+my $sponsored = 0;
 while (my $entity = $sres->nextEntry) {
     my $dc = $entity->getValues('dc')->[0];
-    my $entityID = $entity->getValues('entityIDofIdP')->[0];
+    my $entityID = $entity->getValues('entityIDofIdP')->[0] || '';
 
-    push @extra, "$entityID (dc=$dc)";
+    if ($entityID =~ m,https://login.cesnet.cz/sponsored,) {
+	my ($oPointer, $ldapID, $abraCustomerID, $clientID,
+	    $o, $zakaznik, $clen) = getOrgInfo($entity);
+
+	my %komoraExport = (
+	    entityID => $entityID,
+	    organizace => $o,
+	    ldapID => $ldapID,
+	    abraCustomerId => $abraCustomerID,
+	    clientId => $clientID,
+	    );
+	push @komoraExport, \%komoraExport;
+	$organizace{$o}->{$entityID}++;
+
+	if ($clen =~ /TRUE/i) {
+	    push @clenove, "$o ($entityID)";
+	};
+
+	my @services;
+
+	# proverit jestli maji eduroam
+	push @services, 'eduroam' if has_eduroam($conn, $oPointer);
+
+	# proverit jestli maji TCS
+	push @services, 'TCS' if has_eduroam($conn, $oPointer);
+
+        my $bzakaznik = 0;
+	if ($zakaznik =~ /TRUE/i) {
+	    $bzakaznik = 1;
+	    my $z = "$o ($entityID) ";
+	    push @services, 'CESNET MEMBER' if ($clen =~ /TRUE/i);
+	    push @zakaznici, $z.join(', ', @services);
+	} else {
+            my $oo = $o;
+	    $oo = 'UNDEFINED' unless(defined($o));
+	    push @ostatni, "$oo ($entityID) ".join(', ', @services);
+	};
+
+	$total++;
+	$sponsored++;
+    } else {
+	push @extra, "$entityID (dc=$dc)";
+    };
 };
+
+# vyexportovat data pro komoru
+open(KOMORA, ">".$config->komoraExport)
+    or local_die("Can't write into: ".$config->komoraExport);
+my $json_str = JSON->new->pretty->encode(\@komoraExport);
+print KOMORA $json_str;
+close KOMORA;
 
 if ($config->showStats) {
     print("Subject: [eduID.cz #267261] monthly eduID.cz IdP review\n\n");
-    printf("Total known entities: %d, customers: %d (members: %d), other: %d
+    printf("Total known entities: %d, customers: %d (members: %d, sponsored: %d), other: %d
 Entities not registered in LDAP: ".scalar(@missing)."
 Entities orphaned in LDAP: ".scalar(@extra)."\n\n",
-	   $total, scalar(@zakaznici), scalar(@clenove), scalar(@ostatni));
+	   $total, scalar(@zakaznici), scalar(@clenove), $sponsored, scalar(@ostatni));
     print("List of CESNET customers and members (".scalar(@zakaznici)."):\n",
 	  join("\n", sort map { "    $_"} @zakaznici)."\n\n");
     print("List of other eduID.cz members (".scalar(@ostatni)."):\n",
 	  join("\n", sort map { "    $_"} @ostatni)."\n\n"); 
 };
 
-if (scalar(@missing) or scalar(@extra)) {
+
+# zkontrolovat jestli nejaka organizace nema vic nez jedno IdP
+my @moreIdP;
+foreach my $o (keys %organizace) {
+    my @entityID = keys %{$organizace{$o}};
+    if (@entityID > 1) {
+	push @moreIdP,      "  $o";
+	push @moreIdP, map { "    $_" } @entityID;
+    }
+}
+
+if (scalar(@missing) or scalar(@extra) or scalar(@moreIdP)) {
     print("Subject: [eduID.cz #330914] Pripominka aktualizace ciselniku organizaci v eduID.cz\n");
 
     if (@missing) {
@@ -364,6 +457,12 @@ if (scalar(@missing) or scalar(@extra)) {
 	print("Folowing entityID are not present in ".$config->metadata.":
 ".join('', map { "  $_\n" } @extra)."\n");
     };
+
+    if (@moreIdP) {
+	print("Folowing organizations have multiple IdP:
+".join("\n", @moreIdP)."\n");
+    };
+
 };
 
 $conn->close;
