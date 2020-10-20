@@ -279,7 +279,19 @@ sub load {
     };
   };
 
-  # zlikvidovat z eduid2edugain ty co nejsou v eduid ... tohle je stupidni
+  # Skript funguje tak, že načte všechny .xml v repositáři, a potom
+  # .tag soubory. Jednotlivé entity si označí tagy odpovídajícími
+  # jménu toho .tag souoru a pak tagy použije k sestavení požadovaných
+  # exportů. V tomhle modelu nevadí když v repositáři zůstane
+  # zapomenutá nějaká entita (.xml soubor) co už byla z federace odstraněna.
+  #
+  # Export do eduGAINu je udělán tak že v XML entity je uveden
+  # republish request, když se nalezne, tak se entita označí hradcoded
+  # tagem eduid2edugain a dál se to exportuje jako všechny
+  # ostatní. Tohle by ale mohlo vést k tomu že by jsme do eduGAINu v
+  # exportovali něco co už jsme smazali z eduID.cz a to rozhodně
+  # nechcme. Takže to tady kontroluju a píšu informaci do logu a admin
+  # by to měl smazat z repozitáře.
   foreach my $entityID (keys %md) {
     my @tags = @{$md{$entityID}->{tags}};
 
