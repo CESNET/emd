@@ -581,6 +581,12 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
   my $fed_filters = $fed_id.'_filters';
   my $fed_name = $fed_id.'_name';
 
+  unless ($config->varlist("^$fed_filters\$")) {
+      logger(LOG_ERR, sprintf("Federation \"%s\" is missing expected filters (\"%s\"). Ignoring it.\n",
+			      $fed_id, $fed_filters));
+      next;
+  };
+
   foreach my $key (split(/ *, */, $config->$fed_filters)) {
     $key =~ s/\'//g;
 
