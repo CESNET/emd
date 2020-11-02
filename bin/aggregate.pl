@@ -550,13 +550,10 @@ load_registrationInstant($config->metadata_dir, $md);
 my $exported_something = 0;
 
 foreach my $fed_id (split(/ *, */, $config->federations)) {
-  prg_name('aggregate-'.$fed_id);
+  prg_name('aggregate-dev-'.$fed_id);
 
   my $fed_filters = $fed_id.'_filters';
   my $fed_name = $fed_id.'_name';
-
-  next unless ($fed_id eq 'cesnet-int');
-  warn $fed_id;
 
   unless ($config->varlist("^$fed_filters\$")) {
       logger(LOG_ERR, sprintf("Federation \"%s\" is missing expected filters (\"%s\"). Ignoring it.\n",
