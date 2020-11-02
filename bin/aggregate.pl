@@ -250,19 +250,6 @@ sub load {
     unless ($idpsp) {
       logger(LOG_WARNING, "entityID=$entityID neni SP ani IdP???");
     };
-
-    # Zkontrolovat jestli entita nechce republishnout do nektery dalsi federace
-    foreach my $rr (@{$root->getElementsByTagNameNS($mdeduid_ns, 'RepublishRequest')}) {
-      foreach my $rt ($rr->childNodes) {
-	if ($rt->nodeName =~ /:RepublishTarget$/) {
-	  my $rt_value = $rt->textContent;
-
-	  if ($rt_value eq 'http://edugain.org/') {
-	    push @{$md{$entityID}->{tags}}, 'eduid2edugain';
-	  };
-	};
-      };
-    };
   };
 
   # load tag files
@@ -287,19 +274,6 @@ sub load {
       };
     };
   };
-
-  # zlikvidovat z eduid2edugain ty co nejsou v eduid ... tohle je stupidni
-  foreach my $entityID (keys %md) {
-    my @tags = @{$md{$entityID}->{tags}};
-
-    my @ex_tags = grep {$_ ne 'eduid2edugain'} @tags;
-    if ((scalar(@tags) > scalar(@ex_tags)) and
-	not (grep {$_ eq 'eduid'} @ex_tags)) {
-      logger(LOG_INFO, "Entity \"$entityID\" is not taged anywhere, it should be deleted from SVN."); 
-      $md{$entityID}->{tags} = \@ex_tags;
-    }
-  };
-
 
   return \%md;
 };
@@ -580,6 +554,9 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 
   my $fed_filters = $fed_id.'_filters';
   my $fed_name = $fed_id.'_name';
+
+  next unless ($fed_id eq 'cesnet-int');
+  warn $fed_id;
 
   unless ($config->varlist("^$fed_filters\$")) {
       logger(LOG_ERR, sprintf("Federation \"%s\" is missing expected filters (\"%s\"). Ignoring it.\n",
