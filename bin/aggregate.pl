@@ -597,8 +597,13 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 
     $export = 1 if ($config->force);
     my $no_entities = scalar(keys %{$entities});
-
-    if ($export and $no_entities) {
+    if ($export and ($no_entities == 0)) {
+      my $signed_f = $config->output_dir.'/'.$pref.$key;
+      if ( -f $f || -f $signed_f) {
+	logger(LOG_ERR, sprintf("Filter %s for federation %s created empty export, files $f, $signed_f should be deleted.",
+				$key, $fed_id));
+      };
+    } elsif ($export and $no_entities) {
       $exported_something++;
       logger(LOG_DEBUG,  "Exporting $key to file $f.");
       my $doc = aggregate($entities, $config->$fed_name, $validUntil, $key);
