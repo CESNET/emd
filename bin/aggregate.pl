@@ -233,7 +233,6 @@ sub getRegistrationTS {
 
     if (@output) {
 	my $ts = UnixDate(ParseDate($output[0]), '%Y-%m-%dT%H:%M:%SZ');
-	print "$ts $file\n";
 	return $ts;
     } else {
 	logger(LOG_ERR, "Failed to query git for logs of $file");
