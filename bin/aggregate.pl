@@ -14,6 +14,7 @@ use emd2::Checker qw (checkXMLValidity);
 use Proc::ProcessTable;
 use Number::Bytes::Human qw(format_bytes);
 use List::Util qw(max);
+use Git::Repository;
 use utf8;
 
 my $config = AppConfig->new
@@ -172,7 +173,7 @@ sub tidyEntityDescriptor {
       #  <EntityAttributes>
       #    <Attribute>
       #      <AttributeValue>
-      #       
+      #
       if ($removed) {
 	  my $text = $parent->parentNode->textContent;
 	  if ($text =~ /^\s*$/) {
@@ -187,11 +188,24 @@ sub tidyEntityDescriptor {
   return $node;
 };
 
-sub load_registrationInstant {
-    my $dir = shift;
-    my $md = shift;
+sub updateRegistrationInstantCache {
+    my $entityID = shift;
+    my $ts = shift;
 
-    open(F, "<$dir/eduid.registration") or return;
+    my $cache = $config->reg_instant_cache;
+    open(CACHE, ">> $cache") or do {
+	logger(LOG_ERR, "Failed open $cache for adding: $!");
+	return;
+    };
+    print CACHE "$entityID $ts\n";
+    close(CACHE);
+};
+
+sub loadRegistrationInstantCache {
+    my $file = shift;
+    my $md = {};
+
+    open(F, "<$file") or return;
     while (my $line = <F>) {
 	chomp($line);
 	if ($line =~ /(\S+)\s+(.*)/) {
@@ -199,11 +213,40 @@ sub load_registrationInstant {
 	};
     };
     close(F);
+
+    return $md;
+};
+
+my $startTS = UnixDate(ParseDate('now'), '%Y-%m-%dT%H:%M:%SZ');
+sub getRegistrationTS {
+    my $gitrepo = shift;
+    my $entityID = shift;
+    my $file = shift;
+
+    my @output;
+    eval {
+	@output = split(/\n/, $gitrepo->run('log', '--format=%ci',  $file));
+    } or do {
+	# v případě kdy git výpíše cokoliv na stdout, tak to tady zachytíme a zalogujeme
+	logger(LOG_ERR, "Failed to query git for logs of $file: $@");
+    };
+
+    if (@output) {
+	my $ts = UnixDate(ParseDate($output[0]), '%Y-%m-%dT%H:%M:%SZ');
+	print "$ts $file\n";
+	return $ts;
+    } else {
+	logger(LOG_ERR, "Failed to query git for logs of $file");
+    };
+
+    return $startTS;
 };
 
 sub load {
   my $dir = shift;
   my $fed_ts = shift;
+  my $gitrepo = shift;
+  my $regInstCache = shift;
   my %md;
 
   opendir(DIR, $dir) || local_die "Can't opendir $dir: $!";
@@ -235,7 +278,14 @@ sub load {
 
     my @stat = stat("$dir/$file");
     $md{$entityID}->{mtime} = $stat[9];
-    $md{$entityID}->{registrationInstant} = UnixDate(ParseDate('epoch '.$stat[9]), '%Y-%m-%dT%H:%M:%SZ');
+    if (exists $regInstCache->{$entityID}->{registrationInstant}) {
+	$md{$entityID}->{registrationInstant} = $regInstCache->{$entityID}->{registrationInstant};
+    } else {
+	logger(LOG_INFO, "Missing registrationInstant for $entityID in cache, trying `git log `");
+	my $ts = getRegistrationTS($gitrepo, $entityID, "$dir/$file");
+	$md{$entityID}->{registrationInstant} = $ts;
+	updateRegistrationInstantCache($entityID, $ts);
+    };
 
     my $idpsp = 0;
     if ($root->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor') or
@@ -543,9 +593,12 @@ $config->set('federations', join(',', @fed));
 
 my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
 
-my $md = load($config->metadata_dir, \%fed_ts);
+my $git_repo = Git::Repository->new(work_tree => $config->metadata_dir,
+				    {quiet => 1});
 
-load_registrationInstant($config->metadata_dir, $md);
+my $md_regInstCache = loadRegistrationInstantCache($config->reg_instant_cache);
+
+my $md = load($config->metadata_dir, \%fed_ts, $git_repo, $md_regInstCache);
 
 my $exported_something = 0;
 
