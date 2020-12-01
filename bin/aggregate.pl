@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl
+# apt-get install libdate-manip-perl libxml-libxml-perl libproc-processtable-perl libappconfig-perl libnumber-bytes-human-perl libcrypt-openssl-x509-perl
 
 use strict;
 use lib qw(emd2/lib lib);
@@ -13,6 +13,8 @@ use emd2::Utils qw (logger prg_name local_die startRun stopRun xml_strip_whitesp
 use emd2::Checker qw (checkXMLValidity);
 use Proc::ProcessTable;
 use Number::Bytes::Human qw(format_bytes);
+use List::Util qw(max);
+use Git::Repository;
 use utf8;
 
 my $config = AppConfig->new
@@ -35,6 +37,8 @@ my $config = AppConfig->new
    federations   => { DEFAULT => undef },
 
    force         => { DEFAULT => undef },
+
+   reg_instant_cache => { DEFAULT => undef },
 
    max_age       => { DEFAULT => 12*60*60 }, # sekundy
    validity      => { DEFAULT => '25 days'}, # cokoliv dokaze ParseDate
@@ -171,7 +175,7 @@ sub tidyEntityDescriptor {
       #  <EntityAttributes>
       #    <Attribute>
       #      <AttributeValue>
-      #       
+      #
       if ($removed) {
 	  my $text = $parent->parentNode->textContent;
 	  if ($text =~ /^\s*$/) {
@@ -186,11 +190,26 @@ sub tidyEntityDescriptor {
   return $node;
 };
 
-sub load_registrationInstant {
-    my $dir = shift;
-    my $md = shift;
+sub updateRegistrationInstantCache {
+    my $entityID = shift;
+    my $ts = shift;
 
-    open(F, "<$dir/eduid.registration") or return;
+    return unless defined($config->reg_instant_cache);
+
+    my $cache = $config->reg_instant_cache;
+    open(CACHE, ">> $cache") or do {
+	logger(LOG_ERR, "Failed open $cache for adding: $!");
+	return;
+    };
+    print CACHE "$entityID $ts\n";
+    close(CACHE);
+};
+
+sub loadRegistrationInstantCache {
+    my $file = shift;
+    my $md = {};
+
+    open(F, "<$file") or return;
     while (my $line = <F>) {
 	chomp($line);
 	if ($line =~ /(\S+)\s+(.*)/) {
@@ -198,10 +217,39 @@ sub load_registrationInstant {
 	};
     };
     close(F);
+
+    return $md;
+};
+
+my $startTS = UnixDate(ParseDate('now'), '%Y-%m-%dT%H:%M:%SZ');
+sub getRegistrationTS {
+    my $gitrepo = shift;
+    my $entityID = shift;
+    my $file = shift;
+
+    my @output;
+    eval {
+	@output = split(/\n/, $gitrepo->run('log', '--format=%ci',  $file));
+    } or do {
+	# v případě kdy git výpíše cokoliv na stdout, tak to tady zachytíme a zalogujeme
+	logger(LOG_ERR, "Failed to query git for logs of $file: $@");
+    };
+
+    if (@output) {
+	my $ts = UnixDate(ParseDate($output[0]), '%Y-%m-%dT%H:%M:%SZ');
+	return $ts;
+    } else {
+	logger(LOG_ERR, "Failed to query git for logs of $file");
+    };
+
+    return $startTS;
 };
 
 sub load {
   my $dir = shift;
+  my $fed_ts = shift;
+  my $gitrepo = shift;
+  my $regInstCache = shift;
   my %md;
 
   opendir(DIR, $dir) || local_die "Can't opendir $dir: $!";
@@ -233,7 +281,14 @@ sub load {
 
     my @stat = stat("$dir/$file");
     $md{$entityID}->{mtime} = $stat[9];
-    $md{$entityID}->{registrationInstant} = UnixDate(ParseDate('epoch '.$stat[9]), '%Y-%m-%dT%H:%M:%SZ');
+    if (exists $regInstCache->{$entityID}->{registrationInstant}) {
+	$md{$entityID}->{registrationInstant} = $regInstCache->{$entityID}->{registrationInstant};
+    } elsif (defined $config->reg_instant_cache) {
+	logger(LOG_INFO, "Missing registrationInstant for $entityID in cache, trying `git log `");
+	my $ts = getRegistrationTS($gitrepo, $entityID, "$dir/$file");
+	$md{$entityID}->{registrationInstant} = $ts;
+	updateRegistrationInstantCache($entityID, $ts);
+    };
 
     my $idpsp = 0;
     if ($root->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor') or
@@ -248,25 +303,19 @@ sub load {
     unless ($idpsp) {
       logger(LOG_WARNING, "entityID=$entityID neni SP ani IdP???");
     };
-
-    # Zkontrolovat jestli entita nechce republishnout do nektery dalsi federace
-    foreach my $rr (@{$root->getElementsByTagNameNS($mdeduid_ns, 'RepublishRequest')}) {
-      foreach my $rt ($rr->childNodes) {
-	if ($rt->nodeName =~ /:RepublishTarget$/) {
-	  my $rt_value = $rt->textContent;
-
-	  if ($rt_value eq 'http://edugain.org/') {
-	    push @{$md{$entityID}->{tags}}, 'eduid2edugain';
-	  };
-	};
-      };
-    };
   };
 
   # load tag files
   foreach my $file (grep {$_ =~ /.tag$/} @files) {
     open(F, "$dir/$file") || local_die "Can't read $dir/$file: $!";
     my $tag = $file; $tag =~ s/\.tag$//;
+
+    # vzit si casovou znacku modifikace .tag souboru
+    if (defined $fed_ts) {
+      my @stat = stat("$dir/$file");
+      $fed_ts->{$tag} = max($fed_ts->{$tag} || 0, $stat[9]);
+    };
+
     while (my $line = <F>) {
       chomp($line);
       next if ($line =~ /^#/);
@@ -311,15 +360,20 @@ sub filter {
   my $md = shift;
   my $filter = shift;
   my $or_filter = shift;
+  my $fed_ts = shift;
 
   my $f = join('+', sort @{$filter});
 
   # or filter umoznuje rikat ze chceme entity s tagem hostel a soucasne z federace eduid
   my %or_md;
+  my $mtime = 0;
   if (@{$or_filter}) {
     foreach my $entityID (keys %{$md}) {
       my $or_found = 0;
       foreach my $tag (@{$or_filter}) {
+	if (exists($fed_ts->{$tag})) {
+	  $mtime = max($mtime, $fed_ts->{$tag});
+	};
 	$or_found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
       };
 
@@ -332,11 +386,13 @@ sub filter {
 
   # normalni filter rika ze chceme entity s tagem eduid a idp
   my %md;
-  my $mtime = 0;
   foreach my $entityID (keys %{$md}) {
     my $found = 0;
     my $or_found = 0;
     foreach my $tag (@{$filter}) {
+      if (exists($fed_ts->{$tag})) {
+	$mtime = max($mtime, $fed_ts->{$tag});
+      };
       $found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
       $or_found++ if (grep {$_ eq $tag} @{$md->{$entityID}->{tags}});
     };
@@ -345,7 +401,7 @@ sub filter {
 
     if ($found == @{$filter}) {
       $md{$entityID} = $md->{$entityID};
-      $mtime = $md->{$entityID}->{mtime} if ($md->{$entityID}->{mtime} > $mtime);
+      $mtime = max($mtime, $md->{$entityID}->{mtime} || 0);
     };
   };
 
@@ -540,17 +596,55 @@ $name =~ s/\.cfg$//g;
 prg_name($name);
 startRun($config->cfg);
 
+# otevrit adresar s metadaty a nacist vsechny konfigy a naplnit
+# promenou federations
+opendir(my $dh, $config->metadata_dir) || die "Can't opendir ".$config->metadata_dir.": $!";
+my @fed_cfg = grep { /\.cfg$/ } readdir($dh);
+closedir $dh;
+
+my %fed_ts;
+
+my @fed;
+push @fed, $config->federations if (defined($config->federations));
+
+foreach my $fed_cfg (@fed_cfg) {
+    my $fed = $fed_cfg;
+    $fed =~ s/\.cfg$//g;
+    push @fed, $fed;
+
+    # nacteni fragmentu konfigurace
+    $fed_cfg = $config->metadata_dir."/$fed_cfg";
+    $config->file($fed_cfg) or die "Can't open config file \"$fed_cfg\": $!";
+
+    # vzit si casovou znacku posledni modifikace
+    my @stat = stat($fed_cfg);
+    $fed_ts{$fed} = $stat[9];
+};
+$config->set('federations', join(',', @fed));
+
 my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
 
-my $md = load($config->metadata_dir);
+my $git_repo = Git::Repository->new(work_tree => $config->metadata_dir,
+				    {quiet => 1});
 
-load_registrationInstant($config->metadata_dir, $md);
+my $md_regInstCache = loadRegistrationInstantCache($config->reg_instant_cache)
+    if (defined $config->reg_instant_cache);
+
+my $md = load($config->metadata_dir, \%fed_ts, $git_repo, $md_regInstCache);
+
+my $exported_something = 0;
 
 foreach my $fed_id (split(/ *, */, $config->federations)) {
   prg_name('aggregate-'.$fed_id);
 
   my $fed_filters = $fed_id.'_filters';
   my $fed_name = $fed_id.'_name';
+
+  unless ($config->varlist("^$fed_filters\$")) {
+      logger(LOG_ERR, sprintf("Federation \"%s\" is missing expected filters (\"%s\"). Ignoring it.\n",
+			      $fed_id, $fed_filters));
+      next;
+  };
 
   foreach my $key (split(/ *, */, $config->$fed_filters)) {
     $key =~ s/\'//g;
@@ -565,7 +659,7 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     if ($config->varlist('^'.$or_tags_name.'$')) {
       @or_tags = (split(/ *, */, $config->$or_tags_name));
     };
-    my ($entities, $mtime) = filter($md, [split(/\+/, $key)], \@or_tags);
+    my ($entities, $mtime) = filter($md, [split(/\+/, $key)], \@or_tags, \%fed_ts);
 
     my $pref = '';
     $pref = $fed_id.'+' if ($config->varlist('^'.$or_tags_name.'$'));
@@ -584,8 +678,15 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     };
 
     $export = 1 if ($config->force);
-
-    if ($export) {
+    my $no_entities = scalar(keys %{$entities});
+    if ($export and ($no_entities == 0)) {
+      my $signed_f = $config->output_dir.'/'.$pref.$key;
+      if ( -f $f || -f $signed_f) {
+	logger(LOG_ERR, sprintf("Filter %s for federation %s created empty export, files $f, $signed_f should be deleted.",
+				$key, $fed_id));
+      };
+    } elsif ($export and $no_entities) {
+      $exported_something++;
       logger(LOG_DEBUG,  "Exporting $key to file $f.");
       my $doc = aggregate($entities, $config->$fed_name, $validUntil, $key);
 
@@ -613,7 +714,6 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
 	binmode F, ":utf8";
 	print F $tidy_string;
 	close(F);
-	
 	foreach my $sign_cmd (
                                # $config->sign_cmd, - tohle na novym mdx uz nechceme
 	                       $config->sign256_cmd
@@ -646,5 +746,35 @@ foreach my $fed_id (split(/ *, */, $config->federations)) {
     };
   };
 };
+
+# zkontrolovat vystupni adresar jestli se tam nevali neaktualni
+# bordel, pokud se neco exportovalo, at v tech logach neopruzjeme
+# furt. Skript by se pro jistotu mel volat 1x denne s --force=1 aby se
+# zajistilo prepodepsani metadat.
+if ($exported_something) {
+  opendir($dh, $config->output_dir) || die "Can't opendir ".$config->output_dir.": $!";
+  my @output = grep { -f $config->output_dir."/$_" } readdir($dh);
+  closedir $dh;
+
+  # v konfigu mame platnost ve formatu Date::Manip, konretne testuji s
+  # "27 days" doufam tedy ze pripadne zmeny budou take kompatibilni s
+  # prilepenim ' ago' a spocitani casu v minulosti
+
+  my $too_old = UnixDate($config->validity.' ago', '%s');
+
+  foreach my $out (@output) {
+    $out = $config->output_dir."/$out";
+
+    # perli stat deferencuje, takze pokud bude v andresari link, tak
+    # stat vrati mtime cile
+    my @stat = stat($out);
+
+    if ($stat[9] < $too_old) {
+      my $age_d = sprintf("%d", (time-$stat[9])/(60*60*24));
+      logger(LOG_ERR, "File $out is too old ($age_d days) and should be removed.");
+    };
+  };
+};
+
 
 stopRun($config->cfg);
