@@ -38,6 +38,8 @@ my $config = AppConfig->new
 
    force         => { DEFAULT => undef },
 
+   reg_instant_cache => { DEFAULT => undef },
+
    max_age       => { DEFAULT => 12*60*60 }, # sekundy
    validity      => { DEFAULT => '25 days'}, # cokoliv dokaze ParseDate
   );
@@ -192,6 +194,8 @@ sub updateRegistrationInstantCache {
     my $entityID = shift;
     my $ts = shift;
 
+    return unless defined($config->reg_instant_cache);
+
     my $cache = $config->reg_instant_cache;
     open(CACHE, ">> $cache") or do {
 	logger(LOG_ERR, "Failed open $cache for adding: $!");
@@ -279,7 +283,7 @@ sub load {
     $md{$entityID}->{mtime} = $stat[9];
     if (exists $regInstCache->{$entityID}->{registrationInstant}) {
 	$md{$entityID}->{registrationInstant} = $regInstCache->{$entityID}->{registrationInstant};
-    } else {
+    } elsif (defined $config->reg_instant_cache) {
 	logger(LOG_INFO, "Missing registrationInstant for $entityID in cache, trying `git log `");
 	my $ts = getRegistrationTS($gitrepo, $entityID, "$dir/$file");
 	$md{$entityID}->{registrationInstant} = $ts;
@@ -595,7 +599,8 @@ my $validUntil = UnixDate($config->validity, '%Y-%m-%dT%H:%M:%SZ');
 my $git_repo = Git::Repository->new(work_tree => $config->metadata_dir,
 				    {quiet => 1});
 
-my $md_regInstCache = loadRegistrationInstantCache($config->reg_instant_cache);
+my $md_regInstCache = loadRegistrationInstantCache($config->reg_instant_cache)
+    if (defined $config->reg_instant_cache);
 
 my $md = load($config->metadata_dir, \%fed_ts, $git_repo, $md_regInstCache);
 
