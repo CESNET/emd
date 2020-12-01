@@ -578,7 +578,10 @@ my @fed_cfg = grep { /\.cfg$/ } readdir($dh);
 closedir $dh;
 
 my %fed_ts;
+
 my @fed;
+push @fed, $config->federations if (defined($config->federations));
+
 foreach my $fed_cfg (@fed_cfg) {
     my $fed = $fed_cfg;
     $fed =~ s/\.cfg$//g;
