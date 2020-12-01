@@ -17,6 +17,7 @@ my $config = AppConfig->new
    },
    cfg                   => { DEFAULT => '' },
    git_repository        => { DEFAULT => undef },
+   git_branch            => { DEFAULT => 'origin/master' },
    aggregate             => { DEFAULT => undef },
    aggregate_cmd         => { DEFAULT => undef },
  );
@@ -32,7 +33,7 @@ startRun($config->cfg);
 my $r = Git::Repository->new(work_tree => $config->git_repository,
 			     {quiet => 1});
 my $output = $r->run('fetch');
-$output = $r->run('log', 'HEAD..origin/master');
+$output = $r->run('log', 'HEAD..'.$config->git_branch);
 
 if ($output ne '') {
     my @output = split("\n", $output);
