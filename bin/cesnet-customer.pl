@@ -199,7 +199,7 @@ sub getOrgInfo {
 
     my $zakaznik = $orgEntry->getValues('cesnetActive')->[0] || 'FALSE';
     my $clen = $orgEntry->getValues('cesnetMember')->[0] || 'FALSE';
-    my $o = $orgEntry->getValues('o', 'lang-cs')->[0] || 'UNDEFINED';
+    my $o = $orgEntry->getValues('o', 'lang-cs')->[0] || $orgEntry->getValues('o', 'lang-en')->[0] || $orgEntry->getValues('o')->[0] || 'UNDEFINED';
     my $ldapID = $orgEntry->getValues('dc')->[0] || undef;
     my $abraCustomerID = $orgEntry->getValues('cesnetAbraOrgID')->[0] || undef;
     my $clientID = $orgEntry->getValues('cesnetOrgID')->[0] || undef;
