@@ -62,7 +62,6 @@ my $university_tag = 'http://eduid.cz/uri/idp-group/university';
 my $hospital_tag = 'http://eduid.cz/uri/idp-group/hospital';
 my $cesnet_tag = 'http://eduid.cz/uri/idp-group/cesnet';
 my $other_tag = 'http://eduid.cz/uri/idp-group/other';
-my $aa_access_tag = 'http://eduid.cz/uri/sp-group/aa.cesnet.cz';
 my $hfd_tag = 'http://refeds.org/category/hide-from-discovery';
 
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
@@ -159,11 +158,6 @@ sub tidyEntityDescriptor {
 	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
       };
       if($textContent =~ m,$cesnet_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
-      if($textContent =~ m,$aa_access_tag,) {
 	  $parent->removeChild($element);
 	  $removed++;
 	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
@@ -578,7 +572,6 @@ sub aggregate {
     tag_entity($entity, $university_tag) if (grep {$_ eq 'university'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $hospital_tag) if (grep {$_ eq 'hospital'} @{$md->{$entityID}->{tags}});
     tag_entity($entity, $avcr_tag) if (grep {$_ eq 'avcr'} @{$md->{$entityID}->{tags}});
-    tag_entity($entity, $aa_access_tag) if (grep {$_ eq 'aa-access'} @{$md->{$entityID}->{tags}});
 
     tag_entity($entity, $hfd_tag) if (grep {$_ eq 'hide-from-discovery'} @{$md->{$entityID}->{tags}});
 
