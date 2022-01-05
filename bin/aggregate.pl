@@ -122,45 +122,13 @@ sub tidyEntityDescriptor {
       my $textContent = $element->textContent;
       my $removed = 0;
 
-      if($textContent =~ m,$mefanet_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
-      if($textContent =~ m,$mojeid_edu_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
-      if($textContent =~ m,$library_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
-      if($textContent =~ m,$other_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
-      if($textContent =~ m,$avcr_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
-      if($textContent =~ m,$university_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
-      if($textContent =~ m,$hospital_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
-      };
-      if($textContent =~ m,$cesnet_tag,) {
-	  $parent->removeChild($element);
-	  $removed++;
-	  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
+      foreach my $remove_tag ($mefanet_tag, $mojeid_edu_tag, $library_tag, $other_tag,
+			      $university_tag, $hospital_tag, $cesnet_tag) {
+	  if ($textContent =~ m,$remove_tag,) {
+	      $parent->removeChild($element);
+	      $removed++;
+	      logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
+	  };
       };
 
       # Kontrola ze po pripadnem odstraneni nezustane prazdny
