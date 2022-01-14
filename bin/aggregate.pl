@@ -128,7 +128,7 @@ sub tidyEntityDescriptor {
 
 
       foreach my $remove_tag ($mefanet_tag, $mojeid_edu_tag, $library_tag, $other_tag,
-			      $university_tag, $hospital_tag, $cesnet_tag) {
+			      $avcr_tag, $university_tag, $hospital_tag, $cesnet_tag) {
 	  if ($textContent =~ m,$remove_tag,) {
 	      $parent->removeChild($element);
 	      $removed++;
