@@ -63,6 +63,8 @@ my $hospital_tag = 'http://eduid.cz/uri/idp-group/hospital';
 my $cesnet_tag = 'http://eduid.cz/uri/idp-group/cesnet';
 my $other_tag = 'http://eduid.cz/uri/idp-group/other';
 my $hfd_tag = 'http://refeds.org/category/hide-from-discovery';
+my $rs_tag = 'http://refeds.org/category/research-and-scholarship';
+my $esi_tag = 'https://myacademicid.org/entity-categories/esi';
 
 my $schemaLocation = 'urn:oasis:names:tc:SAML:2.0:metadata saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 shibboleth-metadata-1.0.xsd http://www.w3.org/2000/09/xmldsig# xmldsig-core-schema.xsd';
 
@@ -83,6 +85,8 @@ sub getSelfSize {
 sub tidyEntityDescriptor {
   my $node = shift;
   my $entityID = $node->getAttribute('entityID');
+  my $isSP = ($node->getElementsByTagNameNS($saml20_ns, 'SPSSODescriptor'));
+  my $isIdP = ($node->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor'));
 
   # Semik: 24.7.2013 - je mozny ze tohle nikdy nechodilo pridal jsem
   # odstranovani i bez jmeneho prostoru a zacalo to odstranovat
@@ -122,6 +126,7 @@ sub tidyEntityDescriptor {
       my $textContent = $element->textContent;
       my $removed = 0;
 
+
       foreach my $remove_tag ($mefanet_tag, $mojeid_edu_tag, $library_tag, $other_tag,
 			      $university_tag, $hospital_tag, $cesnet_tag) {
 	  if ($textContent =~ m,$remove_tag,) {
@@ -130,24 +135,52 @@ sub tidyEntityDescriptor {
 	      logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
 	  };
       };
+      if ($isSP) {
+	  foreach my $remove_tag ($rs_tag, $esi_tag) {
+	      if ($textContent =~ m,$remove_tag,) {
+		  $parent->removeChild($element);
+		  $removed++;
+		  logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of SP $entityID.");
+	      };
+	  };
+      };
 
       # Kontrola ze po pripadnem odstraneni nezustane prazdny
       # element. Pouziti textoveho obsahu je ojeb ale zda se ze to
       # funguje vcetne komentaru.
-      # ....
-      #  <EntityAttributes>
-      #    <Attribute>
-      #      <AttributeValue>
+      # ...
+      #  <Extensions>
+      #   <EntityAttributes>
+      #     <Attribute>
+      #       <AttributeValue>
       #
       if ($removed) {
-	  my $text = $parent->parentNode->textContent;
-	  if ($text =~ /^\s*$/) {
-	      my $parent2 = $parent->parentNode;
-	      $parent2->parentNode->removeChild($parent2);
-	      logger(LOG_INFO, "Removed empty ".$parent2->nodeName." from metadata of $entityID.");
+	AGAIN:
+	  if (($parent->nodeName =~ /Attribute$/) or
+	      ($parent->nodeName =~ /EntityAttributes$/)) {
+
+	      my $text = $parent->textContent;
+	      if ($text =~ /^\s*$/) {
+		  my $emptyElement = $parent;
+		  $parent = $parent->parentNode;
+		  $parent->removeChild($emptyElement);
+		  logger(LOG_INFO, "Removed empty ".$emptyElement->nodeName." from metadata of $entityID (1).");
+		  goto AGAIN;
+	      };
+	} elsif ($parent->nodeName =~ /Extensions$/) {
+	      # Extensions muze obsahovat DigestMethod a SigningMethod
+	      # ktere nemaji zadny textovy obsah, takze tady je nutno
+	      # pracovat s tim jestli ma Extensions childNodes a
+	      # trochu se obavam, ze kdyz tam bude nejaky zbytecny
+	      # white space tak se to bude taky brat jako child node.
+	      if (not $parent->hasChildNodes) {
+		  my $emptyElement = $parent;
+		  $parent = $parent->parentNode;
+		  $parent->removeChild($emptyElement);
+		  logger(LOG_INFO, "Removed empty ".$emptyElement->nodeName." from metadata of $entityID (2).");
+	      };
 	  };
       };
-
   };
 
   return $node;
@@ -460,7 +493,7 @@ sub tag_entity {
     # nemela dostat do skladu, kontroluje se to pri vkladani.
 
     $ext = new XML::LibXML::Element('Extensions');
-    $ext->setNamespace($saml20_ns, 'md', 1);  
+    $ext->setNamespace($saml20_ns, 'md', 1);
     $entity->setNamespace($saml20_ns, 'md', 0);
     $entity->insertBefore($ext, $entity->firstChild);
   } else {
@@ -542,6 +575,9 @@ sub aggregate {
     tag_entity($entity, $avcr_tag) if (grep {$_ eq 'avcr'} @{$md->{$entityID}->{tags}});
 
     tag_entity($entity, $hfd_tag) if (grep {$_ eq 'hide-from-discovery'} @{$md->{$entityID}->{tags}});
+
+    tag_entity($entity, $rs_tag) if (grep {$_ eq 'rs'} @{$md->{$entityID}->{tags}});
+    tag_entity($entity, $esi_tag) if (grep {$_ eq 'esi'} @{$md->{$entityID}->{tags}});
 
     $dom->adoptNode($entity);
     $root->addChild($entity);
