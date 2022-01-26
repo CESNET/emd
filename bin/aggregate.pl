@@ -84,6 +84,8 @@ sub getSelfSize {
 
 sub tidyEntityDescriptor {
   my $node = shift;
+  my $edugain = shift;
+
   my $entityID = $node->getAttribute('entityID');
   my $isSP = ($node->getElementsByTagNameNS($saml20_ns, 'SPSSODescriptor'));
   my $isIdP = ($node->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor'));
@@ -135,7 +137,7 @@ sub tidyEntityDescriptor {
 	      logger(LOG_INFO, "Removed ".$element->nodeName."=$textContent from metadata of $entityID.");
 	  };
       };
-      if ($isSP) {
+      if ($isSP and not $edugain) {
 	  foreach my $remove_tag ($rs_tag, $esi_tag) {
 	      if ($textContent =~ m,$remove_tag,) {
 		  $parent->removeChild($element);
@@ -252,6 +254,9 @@ sub load {
   my @files = grep { -f "$dir/$_" } readdir(DIR);
   closedir DIR;
 
+  my $edugain = 0;
+  $edugain = 1 if ($dir =~ /edugain/);
+
   # load metadata elements
   foreach my $file (grep {$_ =~ /.xml$/} @files) {
     my $parser = XML::LibXML->new;
@@ -273,7 +278,7 @@ sub load {
     xml_strip_whitespace($root);
     #die $root->toString;
     my $entityID = $root->getAttribute('entityID');
-    $md{$entityID}->{md} = tidyEntityDescriptor($root);
+    $md{$entityID}->{md} = tidyEntityDescriptor($root, $edugain);
 
     my @stat = stat("$dir/$file");
     $md{$entityID}->{mtime} = $stat[9];
