@@ -102,23 +102,23 @@ sub update_entry_attribute {
     };
 };
 
-sub update_scope {
-    my $entry = shift;
-    my $entity = shift;
-
-    my $entityID = $entity->getAttribute('entityID');
-
-    my @scope;
-    foreach my $idpsso (@{$entity->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor')}) {
-	foreach my $scope (@{$idpsso->getElementsByTagNameNS($saml10, 'Scope')}) {
-	    push @scope, $scope->textContent;
-	};
-    };
-
-    update_entry_attribute($entityID, $entry, 'eduIDczScope', \@scope);
-
-    return $entry->isModified;
-};
+#sub update_scope {
+#    my $entry = shift;
+#    my $entity = shift;
+#
+#    my $entityID = $entity->getAttribute('entityID');
+#
+#    my @scope;
+#    foreach my $idpsso (@{$entity->getElementsByTagNameNS($saml20_ns, 'IDPSSODescriptor')}) {
+#	foreach my $scope (@{$idpsso->getElementsByTagNameNS($saml10, 'Scope')}) {
+#	    push @scope, $scope->textContent;
+#	};
+#    };
+#
+#    update_entry_attribute($entityID, $entry, 'eduIDczScope', \@scope);
+#
+#    return $entry->isModified;
+#};
 
 sub update_affiliation {
     my $entry = shift;
@@ -343,7 +343,8 @@ entityidofidp: $entityID\n\n";
 	    push @ostatni, "$oo ($entityID) ".join(', ', @services);
 	};
 
-	if (update_affiliation($entry, $entity, $bzakaznik) || update_scope($entry, $entity)) {
+    #if (update_affiliation($entry, $entity, $bzakaznik) || update_scope($entry, $entity)) {
+	if (update_affiliation($entry, $entity, $bzakaznik)) {
 	    # neco se zmenilo v LDAPu;
 	    if ($conn->update($entry)) {
 		logger(LOG_INFO, "$entityID updated");
