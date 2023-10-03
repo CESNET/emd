@@ -262,7 +262,9 @@ foreach my $ed ($doc->getElementsByTagNameNS($md_ns, 'EntityDescriptor')) {
 
   my $id = entityID2fname($entityID);
 
-  filter_AttributeConsumingService($entityID, $ed);
+  if ($entityID ne 'https://test-edusign.ed-integrations.com/shibboleth') {
+    filter_AttributeConsumingService($entityID, $ed);
+  }
 
   if (exists $ignore_entityID{$entityID}) {
     logger(LOG_INFO, "Entity $entityID is on ignore_list: skipping.");
