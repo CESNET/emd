@@ -10,6 +10,8 @@ use AppConfig qw(:expand);
 use Git::Repository;
 use Data::Dumper;
 
+delete $ENV{LC_COLLATE}; # semik - proste si stezuje i kdyz to tu je
+
 my $config = AppConfig->new
   ({
     GLOBAL=> { EXPAND => EXPAND_ALL, ARGCOUNT => 1 },
